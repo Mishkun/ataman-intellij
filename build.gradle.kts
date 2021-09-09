@@ -15,7 +15,7 @@ repositories {
 }
 
 group = "io.github.mishkun"
-version = "1.0-SNAPSHOT"
+version = "1.0"
 
 // See https://github.com/JetBrains/gradle-intellij-plugin/
 intellij {
