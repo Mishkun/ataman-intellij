@@ -26,6 +26,8 @@ tasks.getByName<org.jetbrains.intellij.tasks.PatchPluginXmlTask>("patchPluginXml
     changeNotes.set("""
         Initial release
     """.trimIndent())
+    sinceBuild.set("201")
+    untilBuild.set("")
 }
 
 dependencies {
