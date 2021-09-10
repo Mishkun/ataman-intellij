@@ -15,7 +15,7 @@ repositories {
 }
 
 group = "io.github.mishkun"
-version = "1.0"
+version = "1.0.1"
 
 // See https://github.com/JetBrains/gradle-intellij-plugin/
 intellij {
@@ -24,7 +24,7 @@ intellij {
 
 tasks.getByName<org.jetbrains.intellij.tasks.PatchPluginXmlTask>("patchPluginXml") {
     changeNotes.set("""
-        Initial release
+        Fix `Transparent Leader Action` blocking input when not needed
     """.trimIndent())
     sinceBuild.set("201")
     untilBuild.set("")

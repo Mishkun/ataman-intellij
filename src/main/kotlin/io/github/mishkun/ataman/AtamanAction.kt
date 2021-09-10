@@ -58,11 +58,18 @@ class TransparentLeaderAction : DumbAwareAction() {
 
     private val delegateAction = LeaderAction()
 
-    override fun actionPerformed(e: AnActionEvent) {
-        val focusOwner = getCurrentFocus() ?: return
+    override fun update(e: AnActionEvent) {
+        super.update(e)
+        val focusOwner = getCurrentFocus() ?: kotlin.run {
+            e.presentation.isEnabled = false
+            return
+        }
         val isSupplyActive = isSpeedSearchActive(focusOwner)
         val isTextField = isTextField(focusOwner)
-        if (isSupplyActive || isTextField) return
+        e.presentation.isEnabled = !(isSupplyActive || isTextField)
+    }
+
+    override fun actionPerformed(e: AnActionEvent) {
         delegateAction.actionPerformed(e)
     }
 
