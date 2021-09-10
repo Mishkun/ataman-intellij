@@ -23,7 +23,6 @@ import com.intellij.util.ui.EmptyIcon
 import com.intellij.util.ui.GridBag
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
-import com.typesafe.config.ConfigException
 import java.awt.GridBagLayout
 import java.awt.KeyboardFocusManager
 import java.awt.event.ActionEvent
@@ -94,27 +93,11 @@ class LeaderAction : DumbAwareAction() {
     override fun actionPerformed(event: AnActionEvent) {
         val frame = WindowManager.getInstance().getFrame(event.project)!!
         val point = RelativePoint.getCenterOf(frame.rootPane)
-        val rcFile = AtamanConfig.findOrCreateRcFile()
-            ?: show(
-                message = "Could not find or create rc file. Aborting...",
-                title = "Ataman",
-                notificationType = NotificationType.ERROR
-            ).let { return }
-        val values = try {
-            AtamanConfig.buildBindingsTree(event.project, AtamanConfig.execFile(rcFile))
-        } catch (exception: ConfigException) {
-            show(
-                message = "Config is malformed. Aborting...\n${exception.message}",
-                title = "Ataman",
-                notificationType = NotificationType.ERROR
-            )
-            return
-        }
         LeaderPopup(
             event.project, LeaderListStep(
                 "Ataman",
                 event.dataContext,
-                values = values
+                values = AtamanConfig.parsedBindings
             )
         ).show(point)
     }

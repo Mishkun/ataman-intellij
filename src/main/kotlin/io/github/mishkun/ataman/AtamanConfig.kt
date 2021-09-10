@@ -1,18 +1,69 @@
 package io.github.mishkun.ataman
 
 import com.intellij.ide.actions.OpenFileAction
+import com.intellij.notification.NotificationType
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.startup.StartupActivity
 import com.intellij.openapi.wm.WindowManager
+import com.typesafe.config.ConfigException
 import com.typesafe.config.ConfigFactory
 import java.awt.event.KeyEvent
 import java.io.File
 import java.io.IOException
 import javax.swing.KeyStroke
 
+class PluginStartup : StartupActivity.DumbAware/*, LightEditCompatible*/ {
+    override fun runActivity(project: Project) {
+        AtamanConfig.updateConfig(project)
+    }
+
+}
+
+class ReloadAtamanConfigAction : DumbAwareAction() {
+    override fun actionPerformed(e: AnActionEvent) {
+        AtamanConfig.updateConfig(e.project!!)
+    }
+}
+
+class OpenAtamanConfigAction : DumbAwareAction() {
+
+    override fun actionPerformed(e: AnActionEvent) {
+        val eventProject = e.project
+        if (eventProject != null) {
+            val atamanRc = AtamanConfig.findOrCreateRcFile()
+            if (atamanRc != null) {
+                OpenFileAction.openFile(atamanRc.path, eventProject)
+            }
+        }
+    }
+}
+
 object AtamanConfig {
     private const val ATAMAN_RC_FILENAME = ".atamanrc.config"
+
+    var parsedBindings: List<LeaderBinding> = emptyList()
+
+    fun updateConfig(project: Project) {
+        val rcFile = findOrCreateRcFile()
+            ?: show(
+                message = "Could not find or create rc file. Aborting...",
+                title = "Ataman",
+                notificationType = NotificationType.ERROR
+            ).let { return }
+        val values = try {
+            buildBindingsTree(project, execFile(rcFile))
+        } catch (exception: ConfigException) {
+            show(
+                message = "Config is malformed. Aborting...\n${exception.message}",
+                title = "Ataman",
+                notificationType = NotificationType.ERROR
+            )
+            return
+        }
+        parsedBindings = values
+    }
 
     fun getKeyStroke(project: Project?, char: Char) = KeyStroke.getKeyStrokeForEvent(
         // Ugly hack to get KEY_REALEASED keystroke
@@ -44,10 +95,12 @@ object AtamanConfig {
     private const val DESCRIPTION_KEYWORD = "description"
     private const val ACTION_ID_KEYWORD = "actionId"
 
-    fun execFile(file: File): List<Pair<out String, Any>> =
+    @Suppress("UNCHECKED_CAST")
+    private fun execFile(file: File): List<Pair<String, Any>> =
         (ConfigFactory.parseFile(file).root().unwrapped()[BINDINGS_KEYWORD] as Map<String, Any>).toList()
 
-    fun buildBindingsTree(project: Project?, bindingConfig: List<Pair<String, Any>>): List<LeaderBinding> {
+    @Suppress("UNCHECKED_CAST")
+    private fun buildBindingsTree(project: Project?, bindingConfig: List<Pair<String, Any>>): List<LeaderBinding> {
         return bindingConfig.mapNotNull { (keyword, bodyObject) ->
             val key = keyword.first()
             val body = bodyObject as Map<String, Any>
@@ -88,16 +141,3 @@ object AtamanConfig {
     }
 }
 
-
-class OpenAtamanConfigAction : DumbAwareAction() {
-
-    override fun actionPerformed(e: AnActionEvent) {
-        val eventProject = e.project
-        if (eventProject != null) {
-            val atamanRc = AtamanConfig.findOrCreateRcFile()
-            if (atamanRc != null) {
-                OpenFileAction.openFile(atamanRc.path, eventProject)
-            }
-        }
-    }
-}

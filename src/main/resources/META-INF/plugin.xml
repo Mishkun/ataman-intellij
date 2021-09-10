@@ -24,6 +24,7 @@
 
     <extensions defaultExtensionNs="com.intellij">
         <!-- Add your extensions here -->
+        <postStartupActivity implementation="io.github.mishkun.ataman.PluginStartup" order="first"/>
     </extensions>
 
     <actions>
@@ -40,5 +41,9 @@
                 text="Ataman: Open or Create ~/.atamanrc.config" description="Opens or creates ~/.atamanrc.config">
             <add-to-group group-id="ToolsBasicGroup" anchor="last"/>
         </action>
+        <!--suppress PluginXmlCapitalization -->
+        <action id="ReloadAtamanConfigAction" class="io.github.mishkun.ataman.ReloadAtamanConfigAction"
+                text="Reload ~/.atamanrc.config File"
+                description="Attempts to read ~/.atamanrc.config and parse bindings from it"/>
     </actions>
 </idea-plugin>
