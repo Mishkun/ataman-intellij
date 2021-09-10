@@ -201,7 +201,6 @@ class LeaderPopup(
     }
 
     override fun process(aEvent: KeyEvent) {
-        show("${aEvent.keyChar}")
         aEvent.consume()
     }
 
