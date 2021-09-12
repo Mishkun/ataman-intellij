@@ -2,6 +2,10 @@
 
 # Ataman
 
+[![JetBrains IntelliJ Plugins](https://img.shields.io/jetbrains/plugin/v/17567-ataman?label=version)](https://plugins.jetbrains.com/plugin/17567-ataman)
+[![jb downloads](https://img.shields.io/jetbrains/plugin/d/17567-ataman?label=downloads)](https://plugins.jetbrains.com/plugin/17567-ataman)
+
+
 > Ataman - an elected leader of the Cossack troops and settlements
 
 Ataman is an Intellij Idea plugin for using leader key for bindings (almost like in Spacemacs)
