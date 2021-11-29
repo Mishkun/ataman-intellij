@@ -34,10 +34,11 @@ your config. Enjoy!
 ## Advanced setup for IdeaVim users
 
 To use leader key without modifier (e.g. to use SPACE as leader), bind your desired leader key to
-the `Ataman: Transparent Leader Key` action and add this line
+the `Ataman: Transparent Leader Key` action and add these lines
 
 ```
-:nnoremap <Space> :action LeaderAction<cr>
+nnoremap <Space> :action LeaderAction<cr>
+vnoremap <Space> :action LeaderAction<cr>
 ```
 
 to your `~/.ideavimrc` file. This way leader key will work unless you are entering text anywhere
