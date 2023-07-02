@@ -18,7 +18,6 @@ class PluginStartup : StartupActivity.DumbAware/*, LightEditCompatible*/ {
     override fun runActivity(project: Project) {
         AtamanConfig.updateConfig(project)
     }
-
 }
 
 class ReloadAtamanConfigAction : DumbAwareAction() {
@@ -72,7 +71,7 @@ object AtamanConfig {
             KeyEvent.KEY_RELEASED,
             0,
             if (char.isUpperCase()) KeyEvent.SHIFT_DOWN_MASK else 0,
-            KeyEvent.getExtendedKeyCodeForChar(char.toInt()),
+            KeyEvent.getExtendedKeyCodeForChar(char.code),
             char,
         )
     )
@@ -117,7 +116,7 @@ object AtamanConfig {
                 }
                 else -> null
             }
-        }.sortedByDescending { it.char }.sortedBy { it.char.toLowerCase() }
+        }.sortedByDescending { it.char }.sortedBy { it.char.lowercaseChar() }
     }
 
     fun findOrCreateRcFile(): File? {
