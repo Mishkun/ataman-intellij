@@ -2,16 +2,14 @@ package io.github.mishkun.ataman
 
 import com.intellij.icons.AllIcons
 import com.intellij.notification.Notification
-import com.intellij.notification.NotificationListener
 import com.intellij.notification.NotificationType
 import com.intellij.notification.Notifications
 import com.intellij.openapi.actionSystem.*
-import com.intellij.openapi.actionSystem.ex.ActionManagerEx
+import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.ui.popup.PopupStep
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep
 import com.intellij.openapi.wm.WindowManager
@@ -39,7 +37,6 @@ fun show(
     title: String = "",
     notificationType: NotificationType = NotificationType.INFORMATION,
     groupDisplayId: String = "",
-    notificationListener: NotificationListener? = null
 ) {
     invokeLaterOnEDT {
         val notification = Notification(
@@ -47,8 +44,7 @@ fun show(
             title,
             // this is because Notification doesn't accept empty messages
             message.takeUnless { it.isBlank() } ?: "[ empty ]",
-            notificationType,
-            notificationListener)
+            notificationType)
         ApplicationManager.getApplication().messageBus.syncPublisher(Notifications.TOPIC).notify(notification)
     }
 }
@@ -125,43 +121,13 @@ class LeaderListStep(title: String? = null, val dataContext: DataContext, values
 
     override fun getBackgroundFor(value: LeaderBinding?) = UIUtil.getPanelBackground()
 
-    private fun executeAction(action: AnAction, context: DataContext): Boolean {
+    private fun executeAction(action: AnAction, context: DataContext) {
         val event = AnActionEvent(
             null, context, ActionPlaces.KEYBOARD_SHORTCUT, action.templatePresentation,
             ActionManager.getInstance(), 0
         )
-        if (action is ActionGroup && !action.canBePerformed(context)) {
-            // Some ActionGroups should not be performed, but shown as a popup
-            val popup = JBPopupFactory.getInstance()
-                .createActionGroupPopup(event.presentation.text, action, context, false, null, -1)
-            val component = context.getData(PlatformDataKeys.CONTEXT_COMPONENT)
-            if (component != null) {
-                val window = SwingUtilities.getWindowAncestor(component)
-                if (window != null) {
-                    popup.showInCenterOf(window)
-                }
-                return true
-            }
-            popup.showInFocusCenter()
-            return true
-        } else {
-            // beforeActionPerformedUpdate should be called to update the action. It fixes some rider-specific problems.
-            //   because rider use async update method. See VIM-1819.
-            action.beforeActionPerformedUpdate(event)
-            if (event.presentation.isEnabled) {
-                // Executing listeners for action. I can't be sure that this code is absolutely correct,
-                //   action execution process in IJ seems to be more complicated.
-                val actionManager = ActionManagerEx.getInstanceEx()
-                // [VERSION UPDATE] 212+
-                actionManager.fireBeforeActionPerformed(action, event.dataContext, event)
-                action.actionPerformed(event)
-
-                // [VERSION UPDATE] 212+
-                actionManager.fireAfterActionPerformed(action, event.dataContext, event)
-                return true
-            }
-        }
-        return false
+        ActionUtil.performDumbAwareUpdate(action, event, true)
+        ActionUtil.invokeAction(action, context, ActionPlaces.KEYBOARD_SHORTCUT, null, null)
     }
 }
 
