@@ -9,7 +9,7 @@ class OpenAtamanConfigAction : DumbAwareAction() {
     override fun actionPerformed(e: AnActionEvent) {
         val eventProject = e.project
         if (eventProject != null) {
-            val atamanRc = findOrCreateRcFile()
+            val atamanRc = findOrCreateRcFile(getHomeDir())
             if (atamanRc != null) {
                 OpenFileAction.openFile(atamanRc.path, eventProject)
             }

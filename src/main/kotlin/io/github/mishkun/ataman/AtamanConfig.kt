@@ -28,8 +28,8 @@ val RC_TEMPLATE = """
         }
     """.trimIndent()
 
-fun updateConfig(project: Project) {
-    val rcFile = findOrCreateRcFile()
+fun updateConfig(project: Project, homeDir: File = getHomeDir()) {
+    val rcFile = findOrCreateRcFile(homeDir)
         ?: show(
             message = "Could not find or create rc file. Aborting...",
             title = "Ataman",
@@ -91,12 +91,12 @@ private fun buildBindingsTree(project: Project?, bindingConfig: List<Pair<String
     }.sortedByDescending { it.char }.sortedBy { it.char.lowercaseChar() }
 }
 
-private fun getHomeDir(): File {
+fun getHomeDir(): File {
     val homeDirName = System.getProperty("user.home")
     return File(homeDirName)
 }
 
-fun findOrCreateRcFile(homeDir: File = getHomeDir()): File? {
+fun findOrCreateRcFile(homeDir: File): File? {
     val file = File(homeDir, ATAMAN_RC_FILENAME)
     if (file.exists()) {
         return file
