@@ -32,4 +32,5 @@ tasks.getByName<org.jetbrains.intellij.tasks.PatchPluginXmlTask>("patchPluginXml
 
 dependencies {
     implementation("com.typesafe:config:1.4.2")
+    testImplementation("org.hamcrest:hamcrest:3.0")
 }

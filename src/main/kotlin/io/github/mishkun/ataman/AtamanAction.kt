@@ -4,7 +4,11 @@ import com.intellij.icons.AllIcons
 import com.intellij.notification.Notification
 import com.intellij.notification.NotificationType
 import com.intellij.notification.Notifications
-import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.actionSystem.ActionManager
+import com.intellij.openapi.actionSystem.ActionPlaces
+import com.intellij.openapi.actionSystem.AnAction
+import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
@@ -25,9 +29,13 @@ import java.awt.GridBagLayout
 import java.awt.KeyboardFocusManager
 import java.awt.event.ActionEvent
 import java.awt.event.KeyEvent
-import javax.swing.*
+import javax.swing.AbstractAction
+import javax.swing.JComponent
+import javax.swing.JLabel
+import javax.swing.JList
+import javax.swing.JPanel
+import javax.swing.ListCellRenderer
 import javax.swing.text.JTextComponent
-
 
 fun invokeLaterOnEDT(block: () -> Unit) =
     ApplicationManager.getApplication().invokeAndWait(block, ModalityState.NON_MODAL)
@@ -93,7 +101,7 @@ class LeaderAction : DumbAwareAction() {
             event.project, LeaderListStep(
                 "Ataman",
                 event.dataContext,
-                values = AtamanConfig.parsedBindings
+                values = parsedBindings
             )
         ).show(point)
     }
@@ -206,4 +214,3 @@ class ActionItemRenderer : JPanel(GridBagLayout()), ListCellRenderer<LeaderBindi
         return this
     }
 }
-
