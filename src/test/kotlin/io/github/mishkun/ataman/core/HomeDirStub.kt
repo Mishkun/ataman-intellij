@@ -7,6 +7,6 @@ import java.io.File
 
 fun TemporaryFolder.setupEmptyHomeDir(): File = this.root
 
-fun TemporaryFolder.setupStubHomeDir(): File = this.root.also {
-    File(it, ATAMAN_RC_FILENAME).writeText(RC_TEMPLATE)
+fun TemporaryFolder.setupStubHomeDir(text: String = RC_TEMPLATE): File = this.root.also {
+    File(it, ATAMAN_RC_FILENAME).writeText(text)
 }

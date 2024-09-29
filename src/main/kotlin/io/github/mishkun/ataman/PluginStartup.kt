@@ -5,6 +5,6 @@ import com.intellij.openapi.startup.StartupActivity
 
 class PluginStartup : StartupActivity.DumbAware/*, LightEditCompatible*/ {
     override fun runActivity(project: Project) {
-        updateConfig(project)
+        updateConfig()
     }
 }
