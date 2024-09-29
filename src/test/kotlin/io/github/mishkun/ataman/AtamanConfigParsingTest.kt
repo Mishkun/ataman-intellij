@@ -1,6 +1,5 @@
 package io.github.mishkun.ataman
 
-import com.intellij.testFramework.LightPlatform4TestCase
 import io.github.mishkun.ataman.core.setupStubHomeDir
 import org.hamcrest.MatcherAssert.assertThat
 import org.hamcrest.Matchers
@@ -11,7 +10,7 @@ import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.TemporaryFolder
 
-class AtamanConfigParsingTest : LightPlatform4TestCase() {
+class AtamanConfigParsingTest {
 
     @get:Rule
     val tmpFolder = TemporaryFolder()
