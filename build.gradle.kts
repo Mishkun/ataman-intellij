@@ -29,7 +29,7 @@ intellijPlatform {
             """.trimIndent()
         version = project.version.toString()
         ideaVersion {
-            sinceBuild = "203"
+            sinceBuild = "231"
         }
     }
     pluginVerification {
@@ -37,7 +37,7 @@ intellijPlatform {
             select {
                 types.set(listOf(IntelliJPlatformType.IntellijIdeaCommunity))
                 channels.set(listOf(ProductRelease.Channel.RELEASE))
-                sinceBuild = "234"
+                sinceBuild = "231"
                 untilBuild = "241.*"
             }
         }
