@@ -1,17 +1,13 @@
 package io.github.mishkun.ataman
 
 import com.intellij.icons.AllIcons
-import com.intellij.notification.Notification
-import com.intellij.notification.NotificationType
-import com.intellij.notification.Notifications
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.ActionPlaces
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.actionSystem.ex.ActionUtil
-import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.PopupStep
@@ -37,29 +33,11 @@ import javax.swing.JPanel
 import javax.swing.ListCellRenderer
 import javax.swing.text.JTextComponent
 
-fun invokeLaterOnEDT(block: () -> Unit) =
-    ApplicationManager.getApplication().invokeAndWait(block, ModalityState.NON_MODAL)
-
-fun show(
-    message: String,
-    title: String = "",
-    notificationType: NotificationType = NotificationType.INFORMATION,
-    groupDisplayId: String = "",
-) {
-    invokeLaterOnEDT {
-        val notification = Notification(
-            groupDisplayId,
-            title,
-            // this is because Notification doesn't accept empty messages
-            message.takeUnless { it.isBlank() } ?: "[ empty ]",
-            notificationType)
-        ApplicationManager.getApplication().messageBus.syncPublisher(Notifications.TOPIC).notify(notification)
-    }
-}
-
 class TransparentLeaderAction : DumbAwareAction() {
 
     private val delegateAction = LeaderAction()
+
+    override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
 
     override fun update(e: AnActionEvent) {
         super.update(e)

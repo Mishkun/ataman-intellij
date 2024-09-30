@@ -25,6 +25,7 @@
     <extensions defaultExtensionNs="com.intellij">
         <!-- Add your extensions here -->
         <postStartupActivity implementation="io.github.mishkun.ataman.PluginStartup" order="first"/>
+        <notificationGroup id="io.github.mishkun.ataman" displayType="BALLOON"/>
     </extensions>
 
     <actions>

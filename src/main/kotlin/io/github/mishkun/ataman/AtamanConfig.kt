@@ -1,6 +1,8 @@
 package io.github.mishkun.ataman
 
+import com.intellij.notification.NotificationGroupManager
 import com.intellij.notification.NotificationType
+import com.intellij.openapi.project.Project
 import com.typesafe.config.ConfigException
 import com.typesafe.config.ConfigFactory
 import java.awt.event.KeyEvent
@@ -25,16 +27,21 @@ val RC_TEMPLATE = """
         }
     """.trimIndent()
 
-fun updateConfig(homeDir: File = getHomeDir()) {
+fun updateConfig(project: Project? = null, homeDir: File = getHomeDir()) {
     val rcFile = findOrCreateRcFile(homeDir)
     val values = try {
         buildBindingsTree(execFile(rcFile))
     } catch (exception: ConfigException) {
-        show(
-            message = "Config is malformed. Aborting...\n${exception.message}",
-            title = "Ataman",
-            notificationType = NotificationType.ERROR
-        )
+        project?.let {
+            NotificationGroupManager.getInstance()
+                .getNotificationGroup("io.github.mishkun.ataman")
+                .createNotification(
+                    "Ataman",
+                    "Config is malformed. Aborting...\n${exception.message}",
+                    NotificationType.ERROR
+                )
+                .notify(project)
+        }
         return
     }
     parsedBindings = values
