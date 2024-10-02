@@ -27,7 +27,7 @@ val RC_TEMPLATE = """
         }
     """.trimIndent()
 
-fun updateConfig(project: Project? = null, homeDir: File = getHomeDir()) {
+fun updateConfig(project: Project?, homeDir: File = getHomeDir()) {
     val rcFile = findOrCreateRcFile(homeDir)
     val values = try {
         buildBindingsTree(execFile(rcFile))
