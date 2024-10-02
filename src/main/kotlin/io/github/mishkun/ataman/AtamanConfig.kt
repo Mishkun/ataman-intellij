@@ -2,14 +2,12 @@ package io.github.mishkun.ataman
 
 import com.intellij.notification.NotificationGroupManager
 import com.intellij.notification.NotificationType
+import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
-import com.typesafe.config.ConfigException
 import com.typesafe.config.ConfigFactory
 import java.awt.event.KeyEvent
 import java.io.File
 import javax.swing.KeyStroke
-
-var parsedBindings: List<LeaderBinding> = emptyList()
 
 const val ATAMAN_RC_FILENAME = ".atamanrc.config"
 
@@ -27,24 +25,27 @@ val RC_TEMPLATE = """
         }
     """.trimIndent()
 
-fun updateConfig(project: Project?, homeDir: File = getHomeDir()) {
-    val rcFile = findOrCreateRcFile(homeDir)
-    val values = try {
-        buildBindingsTree(execFile(rcFile))
-    } catch (exception: ConfigException) {
-        project?.let {
+fun updateConfig(project: Project, configDir: File) {
+    parseConfig(configDir).fold(onSuccess = { values ->
+        service<ConfigService>().parsedBindings = values
+    },
+        onFailure = { error ->
             NotificationGroupManager.getInstance()
                 .getNotificationGroup("io.github.mishkun.ataman")
                 .createNotification(
                     "Ataman",
-                    "Config is malformed. Aborting...\n${exception.message}",
+                    "Config is malformed. Aborting...\n${error.message}",
                     NotificationType.ERROR
                 )
                 .notify(project)
-        }
-        return
+        })
+}
+
+fun parseConfig(configDir: File): Result<List<LeaderBinding>> {
+    val rcFile = findOrCreateRcFile(configDir)
+    return runCatching {
+        buildBindingsTree(execFile(rcFile))
     }
-    parsedBindings = values
 }
 
 fun getKeyStroke(char: Char): KeyStroke = KeyStroke.getKeyStroke(
@@ -83,11 +84,6 @@ private fun buildBindingsTree(bindingConfig: List<Pair<String, Any>>): List<Lead
             else -> null
         }
     }.sortedByDescending { it.char }.sortedBy { it.char.lowercaseChar() }
-}
-
-fun getHomeDir(): File {
-    val homeDirName = System.getProperty("user.home")
-    return File(homeDirName)
 }
 
 fun findOrCreateRcFile(homeDir: File): File {

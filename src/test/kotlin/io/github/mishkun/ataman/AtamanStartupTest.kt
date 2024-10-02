@@ -1,21 +1,18 @@
 package io.github.mishkun.ataman
 
-import com.intellij.testFramework.LightPlatform4TestCase
+import com.intellij.openapi.components.service
+import io.github.mishkun.ataman.core.BaseTestWithConfigService
+import io.github.mishkun.ataman.core.MockConfigService
 import org.hamcrest.MatcherAssert
 import org.hamcrest.Matchers
-import org.junit.After
 import org.junit.Test
 
-class AtamanStartupTest : LightPlatform4TestCase() {
+class AtamanStartupTest : BaseTestWithConfigService() {
+
+    override val mockConfigService: MockConfigService = MockConfigService()
 
     @Test
     fun `executes startup`() {
-        MatcherAssert.assertThat(parsedBindings, Matchers.not(Matchers.empty()))
-    }
-
-    @After
-    fun teardownProject() {
-        parsedBindings = emptyList()
-        setProject(null)
+        MatcherAssert.assertThat(service<ConfigService>().parsedBindings, Matchers.not(Matchers.empty()))
     }
 }

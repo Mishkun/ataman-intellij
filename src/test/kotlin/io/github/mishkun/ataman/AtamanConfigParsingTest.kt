@@ -1,11 +1,9 @@
 package io.github.mishkun.ataman
 
-import io.github.mishkun.ataman.core.setupStubHomeDir
+import io.github.mishkun.ataman.core.setupStubConfigDir
 import org.hamcrest.MatcherAssert.assertThat
 import org.hamcrest.Matchers
 import org.hamcrest.Matchers.not
-import org.junit.After
-import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.TemporaryFolder
@@ -15,28 +13,25 @@ class AtamanConfigParsingTest {
     @get:Rule
     val tmpFolder = TemporaryFolder()
 
-    @Before
-    fun setup() {
-        parsedBindings = emptyList()
+    @Test
+    fun `returns error on malformed config`() {
+        val parsedBindings = parseConfig(
+            configDir = tmpFolder.setupStubConfigDir(text = "}malformed{")
+        )
+        assertThat(parsedBindings.isFailure, Matchers.equalTo(true))
     }
 
     @Test
     fun `skips bindings that are not set up properly`() {
-        updateConfig(
-            project = null,
-            homeDir = tmpFolder.setupStubHomeDir(text = "bindings { q { description: Session } }")
+        val parsedBindings = parseConfig(
+            configDir = tmpFolder.setupStubConfigDir(text = "bindings { q { description: Session } }")
         )
-        assertThat(parsedBindings, Matchers.empty())
+        assertThat(parsedBindings.getOrNull()!!, Matchers.empty())
     }
 
     @Test
     fun `parses config to the list of bindings`() {
-        updateConfig(project = null, homeDir = tmpFolder.setupStubHomeDir())
-        assertThat(parsedBindings, not(Matchers.empty()))
-    }
-
-    @After
-    fun teardown() {
-        parsedBindings = emptyList()
+        val parsedBindings = parseConfig(configDir = tmpFolder.setupStubConfigDir())
+        assertThat(parsedBindings.getOrNull()!!, not(Matchers.empty()))
     }
 }

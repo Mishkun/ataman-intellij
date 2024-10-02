@@ -11,6 +11,18 @@ kotlin {
     jvmToolchain(17)
 }
 
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(17)
+    }
+}
+
+tasks.withType<Test>().configureEach {
+    javaLauncher.set(javaToolchains.launcherFor {
+        languageVersion.set(JavaLanguageVersion.of(17))
+    })
+}
+
 repositories {
     mavenCentral()
     intellijPlatform {
@@ -55,4 +67,7 @@ dependencies {
     testImplementation("junit:junit:4.13.2")
     testImplementation("org.hamcrest:hamcrest:3.0")
     testImplementation("org.opentest4j:opentest4j:1.2.0")
+    testImplementation("io.mockk:mockk:1.12.7") {
+        exclude(group = "org.jetbrains.kotlin")
+    }
 }

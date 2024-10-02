@@ -1,7 +1,7 @@
 package io.github.mishkun.ataman
 
-import io.github.mishkun.ataman.core.setupEmptyHomeDir
-import io.github.mishkun.ataman.core.setupStubHomeDir
+import io.github.mishkun.ataman.core.setupEmptyConfigDir
+import io.github.mishkun.ataman.core.setupStubConfigDir
 import org.hamcrest.MatcherAssert.assertThat
 import org.hamcrest.Matchers.allOf
 import org.hamcrest.Matchers.`is`
@@ -19,7 +19,7 @@ class AtamanConfigFileFinderTest {
 
     @Test
     fun `creates rc file if it does not exist`() {
-        val foundRcFile = findOrCreateRcFile(tmpFolder.setupEmptyHomeDir())
+        val foundRcFile = findOrCreateRcFile(tmpFolder.setupEmptyConfigDir())
         assertThat(foundRcFile, notNullValue())
         assertThat(
             foundRcFile, allOf(
@@ -27,12 +27,12 @@ class AtamanConfigFileFinderTest {
                 aFileNamed(`is`(ATAMAN_RC_FILENAME)),
             )
         )
-        assertThat(foundRcFile!!.readText(), `is`(RC_TEMPLATE))
+        assertThat(foundRcFile.readText(), `is`(RC_TEMPLATE))
     }
 
     @Test
     fun `finds rc file if it exists`() {
-        val foundRcFile = findOrCreateRcFile(tmpFolder.setupStubHomeDir())
+        val foundRcFile = findOrCreateRcFile(tmpFolder.setupStubConfigDir())
         assertThat(foundRcFile, notNullValue())
     }
 }
