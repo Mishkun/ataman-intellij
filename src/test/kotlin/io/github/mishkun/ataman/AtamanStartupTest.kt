@@ -1,15 +1,15 @@
 package io.github.mishkun.ataman
 
 import com.intellij.openapi.components.service
-import io.github.mishkun.ataman.core.BaseTestWithConfigService
-import io.github.mishkun.ataman.core.MockConfigService
+import io.github.mishkun.ataman.core.BaseTestWithConfig
+import io.github.mishkun.ataman.core.MockConfig
 import org.hamcrest.MatcherAssert
 import org.hamcrest.Matchers
 import org.junit.Test
 
-class AtamanStartupTest : BaseTestWithConfigService() {
+class AtamanStartupTest : BaseTestWithConfig() {
 
-    override val mockConfigService: MockConfigService = MockConfigService()
+    override val mockConfig: MockConfig = MockConfig()
 
     @Test
     fun `executes startup`() {

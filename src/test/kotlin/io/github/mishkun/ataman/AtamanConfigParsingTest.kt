@@ -22,11 +22,12 @@ class AtamanConfigParsingTest {
     }
 
     @Test
-    fun `skips bindings that are not set up properly`() {
+    fun `throws if bindings are not set up properly`() {
         val parsedBindings = parseConfig(
             configDir = tmpFolder.setupStubConfigDir(text = "bindings { q { description: Session } }")
         )
-        assertThat(parsedBindings.getOrNull()!!, Matchers.empty())
+        assertThat(parsedBindings.isFailure, Matchers.equalTo(true))
+        println(parsedBindings.exceptionOrNull())
     }
 
     @Test

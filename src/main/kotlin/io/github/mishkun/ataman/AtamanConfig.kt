@@ -7,6 +7,7 @@ import com.intellij.openapi.project.Project
 import com.typesafe.config.ConfigFactory
 import java.awt.event.KeyEvent
 import java.io.File
+import java.io.IOException
 import javax.swing.KeyStroke
 
 const val ATAMAN_RC_FILENAME = ".atamanrc.config"
@@ -30,30 +31,56 @@ fun updateConfig(project: Project, configDir: File) {
         service<ConfigService>().parsedBindings = values
     },
         onFailure = { error ->
-            NotificationGroupManager.getInstance()
-                .getNotificationGroup("io.github.mishkun.ataman")
-                .createNotification(
-                    "Ataman",
+            when (error) {
+                is IllegalStateException -> project.showNotification(
+                    "Bindings schema is invalid. Aborting...\n${error.message}",
+                    NotificationType.ERROR
+                )
+
+                is IOException -> project.showNotification(
+                    "Config file is not found and I could not create it. Aborting...\n${error.message}",
+                    NotificationType.ERROR
+                )
+
+                else -> project.showNotification(
                     "Config is malformed. Aborting...\n${error.message}",
                     NotificationType.ERROR
                 )
-                .notify(project)
+            }
         })
 }
 
+private fun Project.showNotification(
+    message: String,
+    notificationType: NotificationType = NotificationType.INFORMATION
+) {
+    NotificationGroupManager.getInstance()
+        .getNotificationGroup("io.github.mishkun.ataman")
+        .createNotification(
+            "Ataman",
+            message,
+            notificationType
+        )
+        .notify(this)
+}
+
 fun parseConfig(configDir: File): Result<List<LeaderBinding>> {
-    val rcFile = findOrCreateRcFile(configDir)
     return runCatching {
-        buildBindingsTree(execFile(rcFile))
+        val rcFile = findOrCreateRcFile(configDir)
+        val (bindings, throwables) = buildBindingsTree(execFile(rcFile))
+        if (throwables.isNotEmpty()) {
+            throw IllegalStateException(throwables.joinToString("\n"))
+        } else {
+            bindings
+        }
     }
 }
 
 fun getKeyStroke(char: Char): KeyStroke = KeyStroke.getKeyStroke(
     KeyEvent.getExtendedKeyCodeForChar(char.code),
-        if (char.isUpperCase()) KeyEvent.SHIFT_DOWN_MASK else 0,
+    if (char.isUpperCase()) KeyEvent.SHIFT_DOWN_MASK else 0,
     true
 )
-
 
 private const val BINDINGS_KEYWORD = "bindings"
 private const val DESCRIPTION_KEYWORD = "description"
@@ -64,8 +91,9 @@ private fun execFile(file: File): List<Pair<String, Any>> =
     (ConfigFactory.parseFile(file).root().unwrapped()[BINDINGS_KEYWORD] as Map<String, Any>).toList()
 
 @Suppress("UNCHECKED_CAST")
-private fun buildBindingsTree(bindingConfig: List<Pair<String, Any>>): List<LeaderBinding> {
-    return bindingConfig.mapNotNull { (keyword, bodyObject) ->
+private fun buildBindingsTree(bindingConfig: List<Pair<String, Any>>): Pair<List<LeaderBinding>, List<String>> {
+    val errors = mutableListOf<String>()
+    val bindings = bindingConfig.mapNotNull { (keyword, bodyObject) ->
         val key = keyword.first()
         val body = bodyObject as Map<String, Any>
         val description = bodyObject[DESCRIPTION_KEYWORD] as String
@@ -77,13 +105,17 @@ private fun buildBindingsTree(bindingConfig: List<Pair<String, Any>>): List<Lead
 
             body.containsKey(BINDINGS_KEYWORD) -> {
                 val childBindingsObject = body[BINDINGS_KEYWORD] as Map<String, Any>
-                val childBindings = buildBindingsTree(childBindingsObject.toList())
+                val childBindings = buildBindingsTree(childBindingsObject.toList()).first
                 LeaderBinding.GroupBinding(getKeyStroke(key), key, description, childBindings)
             }
 
-            else -> null
+            else -> {
+                errors.add("Expected either $ACTION_ID_KEYWORD or $BINDINGS_KEYWORD for key $key, but got $keyword")
+                null
+            }
         }
     }.sortedByDescending { it.char }.sortedBy { it.char.lowercaseChar() }
+    return bindings to errors
 }
 
 fun findOrCreateRcFile(homeDir: File): File {

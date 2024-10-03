@@ -1,14 +1,14 @@
 package io.github.mishkun.ataman.core
 
 import io.github.mishkun.ataman.ATAMAN_RC_FILENAME
-import io.github.mishkun.ataman.ConfigService
+import io.github.mishkun.ataman.Config
 import io.github.mishkun.ataman.RC_TEMPLATE
 import io.mockk.every
 import io.mockk.mockkConstructor
 import org.junit.rules.TemporaryFolder
 import java.io.File
 
-class MockConfigService(private val config: String = RC_TEMPLATE) {
+class MockConfig(private val config: String = RC_TEMPLATE) {
 
     fun setup() {
         configFolder.create()
@@ -16,13 +16,17 @@ class MockConfigService(private val config: String = RC_TEMPLATE) {
         mockConfigDir()
     }
 
+    fun stubConfig(text: String) {
+        configFolder.setupStubConfigDir(text)
+    }
+
     fun teardown() {
         configFolder.delete()
     }
 
     private fun mockConfigDir() {
-        mockkConstructor(ConfigService::class)
-        every { anyConstructed<ConfigService>().configDir } answers { configFolder.root }
+        mockkConstructor(Config::class)
+        every { anyConstructed<Config>().configDir } answers { configFolder.root }
     }
 
     companion object {

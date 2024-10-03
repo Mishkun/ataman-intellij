@@ -2,17 +2,17 @@ package io.github.mishkun.ataman.core
 
 import com.intellij.testFramework.LightPlatform4TestCase
 
-abstract class BaseTestWithConfigService : LightPlatform4TestCase() {
-    protected abstract val mockConfigService: MockConfigService
+abstract class BaseTestWithConfig : LightPlatform4TestCase() {
+    protected open val mockConfig: MockConfig = MockConfig()
 
     override fun setUp() {
-        mockConfigService.setup()
+        mockConfig.setup()
         super.setUp()
     }
 
     override fun tearDown() {
         super.tearDown()
-        mockConfigService.teardown()
+        mockConfig.teardown()
         setProject(null)
     }
 }

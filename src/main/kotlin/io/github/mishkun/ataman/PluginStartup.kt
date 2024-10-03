@@ -1,12 +1,11 @@
 package io.github.mishkun.ataman
 
-import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.ProjectActivity
 
 class PluginStartup : ProjectActivity {
     override suspend fun execute(project: Project) {
-        val configDir = service<ConfigService>().configDir
+        val configDir = Config().configDir
         updateConfig(project, configDir)
     }
 }

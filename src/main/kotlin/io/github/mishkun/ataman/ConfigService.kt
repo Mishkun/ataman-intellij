@@ -5,6 +5,9 @@ import java.io.File
 
 @Service
 class ConfigService {
-    val configDir: File = File(System.getProperty("user.home"))
     var parsedBindings: List<LeaderBinding> = emptyList()
+}
+
+class Config {
+    val configDir: File = File(System.getProperty("user.home"))
 }
