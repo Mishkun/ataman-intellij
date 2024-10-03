@@ -10,6 +10,12 @@ import java.io.File
 
 class MockConfig(private val config: String = RC_TEMPLATE) {
 
+    val configFolder: TemporaryFolder
+        get() = Companion.configFolder
+
+    val configFile: File
+        get() = configFolder.root.resolve(ATAMAN_RC_FILENAME)
+
     fun setup() {
         configFolder.create()
         configFolder.setupStubConfigDir(config)

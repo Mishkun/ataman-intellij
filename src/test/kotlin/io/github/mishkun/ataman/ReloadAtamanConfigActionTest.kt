@@ -6,14 +6,11 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.testFramework.PlatformTestUtil
 import io.github.mishkun.ataman.core.BaseTestWithConfig
-import io.github.mishkun.ataman.core.MockConfig
 import org.hamcrest.MatcherAssert.assertThat
 import org.hamcrest.Matchers
 import org.junit.Test
 
-class AtamanConfigReloadingTest : BaseTestWithConfig() {
-
-    override val mockConfig: MockConfig = MockConfig()
+class ReloadAtamanConfigActionTest : BaseTestWithConfig() {
 
     @Test
     fun `reloads config successfully`() {
