@@ -5,6 +5,7 @@ import org.jetbrains.intellij.platform.gradle.models.ProductRelease
 plugins {
     kotlin("jvm") version "2.0.20"
     id("org.jetbrains.intellij.platform") version "2.1.0"
+    id("org.jetbrains.kotlinx.kover") version "0.9.0-RC"
 }
 
 kotlin {
