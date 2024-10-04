@@ -39,6 +39,7 @@ val uiTests by intellijPlatformTesting.testIdeUi.registering {
         archiveFile.set(tasks.buildPlugin.flatMap { it.archiveFile })
         testClassesDirs = uiTest.get().output.classesDirs
         classpath = uiTest.get().compileClasspath + uiTest.get().runtimeClasspath
+        systemProperty("ataman.configFolder", layout.projectDirectory.dir("example-config").asFile.absolutePath)
         environment("ATAMAN_PLUGIN_PATH", tasks.buildPlugin.flatMap { it.archiveFile }.get().asFile.absolutePath)
     }
 }

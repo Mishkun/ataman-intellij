@@ -7,6 +7,7 @@ abstract class BaseTestWithConfig : LightPlatform4TestCase() {
 
     override fun setUp() {
         mockConfig.setup()
+        System.setProperty("ataman.configFolder", mockConfig.configFolder.root.absolutePath)
         super.setUp()
     }
 

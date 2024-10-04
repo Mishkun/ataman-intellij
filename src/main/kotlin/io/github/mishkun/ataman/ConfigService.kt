@@ -9,5 +9,5 @@ class ConfigService {
 }
 
 class Config {
-    val configDir: File = File(System.getProperty("user.home"))
+    val configDir: File = File(System.getProperty("ataman.configFolder") ?: System.getProperty("user.home"))
 }
