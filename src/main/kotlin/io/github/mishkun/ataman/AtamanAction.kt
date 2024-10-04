@@ -13,8 +13,6 @@ import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.PopupStep
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep
-import com.intellij.openapi.wm.WindowManager
-import com.intellij.ui.awt.RelativePoint
 import com.intellij.ui.popup.WizardPopup
 import com.intellij.ui.popup.list.ListPopupImpl
 import com.intellij.ui.speedSearch.SpeedSearchSupply
@@ -74,15 +72,13 @@ class TransparentLeaderAction : DumbAwareAction() {
 class LeaderAction : DumbAwareAction() {
 
     override fun actionPerformed(event: AnActionEvent) {
-        val frame = WindowManager.getInstance().getFrame(event.project)!!
-        val point = RelativePoint.getCenterOf(frame.rootPane)
         LeaderPopup(
             event.project, LeaderListStep(
                 "Ataman",
                 event.dataContext,
                 values = service<ConfigService>().parsedBindings
             )
-        ).show(point)
+        ).showCenteredInCurrentWindow(event.project!!)
     }
 
 }
@@ -110,7 +106,7 @@ class LeaderListStep(title: String? = null, val dataContext: DataContext, values
 
     private fun executeAction(action: AnAction, context: DataContext) {
         val event = AnActionEvent(
-            null, context, ActionPlaces.KEYBOARD_SHORTCUT, action.templatePresentation,
+            null, context, ActionPlaces.KEYBOARD_SHORTCUT, action.templatePresentation.clone(),
             ActionManager.getInstance(), 0
         )
         ActionUtil.performDumbAwareUpdate(action, event, true)
