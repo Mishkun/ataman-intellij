@@ -18,17 +18,30 @@ java {
     }
 }
 
-val uiTestConfiguration by configurations.registering {
-    isCanBeResolved = true
-    isCanBeConsumed = false
-}
 
 val uiTest by sourceSets.registering {
     kotlin.srcDirs("src/uiTest/kotlin")
     resources.srcDir("src/uiTest/resources")
 
-    compileClasspath += sourceSets.main.get().output + configurations.testCompileClasspath.get() + configurations.compileClasspath.get() + uiTestConfiguration.get()
-    runtimeClasspath += sourceSets.main.get().output + configurations.testRuntimeClasspath.get() + configurations.runtimeClasspath.get() + uiTestConfiguration.get()
+    compileClasspath += sourceSets.main.get().output
+    runtimeClasspath += sourceSets.main.get().output
+}
+
+val uiTestImplementation by configurations.getting {
+    extendsFrom(configurations.testImplementation.get())
+}
+
+val uiTestRuntimeOnly by configurations.getting {
+    extendsFrom(configurations.testRuntimeOnly.get())
+}
+
+kover {
+    merge {
+        projects(":")
+        sources {
+            excludedSourceSets.add("uiTest")
+        }
+    }
 }
 
 val uiTests by intellijPlatformTesting.testIdeUi.registering {
@@ -92,7 +105,7 @@ dependencies {
     intellijPlatform {
         intellijIdeaCommunity("2024.2.3")
         testFramework(TestFrameworkType.Platform)
-        testFramework(TestFrameworkType.Starter, configurationName = uiTestConfiguration.name)
+        testFramework(TestFrameworkType.Starter, configurationName = "uiTestImplementation")
         pluginVerifier()
     }
     implementation("com.typesafe:config:1.4.2")
