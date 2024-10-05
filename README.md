@@ -75,6 +75,10 @@ bindings { # always present
 
 You can look at my own config [here](https://gist.github.com/Mishkun/b3fa501f82a5ad1205adf87c89c70031) for more examples
 
+### Finding actionId
+
+To find actionId of the action you want to bind, you can use IdeaVim's action "IdeaVim: Track Action IDs"
+
 ## Building from source
 
 This repo uses [gradle-intellij-plugin](https://github.com/JetBrains/gradle-intellij-plugin/) for building.
