@@ -20,6 +20,7 @@ import com.intellij.util.ui.EmptyIcon
 import com.intellij.util.ui.GridBag
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
+import java.awt.Font
 import java.awt.GridBagLayout
 import java.awt.KeyboardFocusManager
 import java.awt.event.ActionEvent
@@ -178,7 +179,8 @@ class ActionItemRenderer : JPanel(GridBagLayout()), ListCellRenderer<LeaderBindi
         selected: Boolean,
         focused: Boolean
     ): JComponent {
-        bindingKeyLabel.text = value.char.toString()
+        bindingKeyLabel.text = value.char
+        bindingKeyLabel.font = UIUtil.getFontWithFallback("monospaced", Font.PLAIN, 12)
         bindingKeyLabel.foreground = UIUtil.getListForeground(selected, false)
         actionTextLabel.text = value.description
         actionTextLabel.foreground = UIUtil.getListForeground(selected, value is LeaderBinding.GroupBinding)
