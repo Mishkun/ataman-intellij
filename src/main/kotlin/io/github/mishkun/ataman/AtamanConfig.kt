@@ -4,6 +4,7 @@ import com.intellij.notification.NotificationGroupManager
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.ui.playback.commands.KeyStrokeMap
 import com.typesafe.config.ConfigFactory
 import java.awt.event.KeyEvent
 import java.io.File
@@ -101,16 +102,19 @@ fun parseConfig(configDir: File, ideProductKey: String): Result<List<LeaderBindi
         }
     }
 }
+private val keyStrokeMap = KeyStrokeMap()
 
-fun getKeyStroke(key: String): KeyStroke = when (key.length) {
-    1 -> getKeyStroke(key[0])
-    else -> getFKeyStroke(key)
+fun getKeyStroke(key: String): KeyStroke {
+    val trimmedKey = key.trim('"')
+    return when (trimmedKey.length) {
+        1 -> keyStrokeMap.get(trimmedKey[0])
+        else -> getFKeyStroke(key)
+    }
 }
 
 fun getFKeyStroke(key: String): KeyStroke = KeyStroke.getKeyStroke(
     key.substringAfter("F").toInt() + 111,
-    0,
-    true
+    0
 )
 
 fun getKeyStroke(char: Char): KeyStroke = KeyStroke.getKeyStroke(

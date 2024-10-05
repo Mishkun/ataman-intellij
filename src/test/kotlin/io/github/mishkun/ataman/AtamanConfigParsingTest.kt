@@ -15,6 +15,39 @@ class AtamanConfigParsingTest {
     val tmpFolder = TemporaryFolder()
 
     @Test
+    fun `supports special characters`() {
+        val parsedBindings = parseConfig(
+            configDir = tmpFolder.setupStubConfigDir(
+                text = """
+                |bindings { 
+                |  "." { actionId: CommentByLineComment, description: Comment }
+                |  ">" { actionId: CommentByLineComment, description: Comment }
+                |}""".trimMargin()
+            ),
+            ideProductKey = "IC"
+        )
+        assertThat(parsedBindings.exceptionOrNull(), Matchers.nullValue())
+        assertThat(
+            parsedBindings.getOrNull()!!, Matchers.equalTo(
+                listOf(
+                    LeaderBinding.SingleBinding(
+                        KeyStroke.getKeyStroke(KeyEvent.VK_PERIOD, 0),
+                        ".",
+                        "Comment",
+                        "CommentByLineComment",
+                    ),
+                    LeaderBinding.SingleBinding(
+                        KeyStroke.getKeyStroke(KeyEvent.VK_PERIOD, KeyEvent.SHIFT_DOWN_MASK),
+                        ">",
+                        "Comment",
+                        "CommentByLineComment",
+                    )
+                )
+            )
+        )
+    }
+
+    @Test
     fun `supports multibindings`() {
         val parsedBindings = parseConfig(
             configDir = tmpFolder.setupStubConfigDir(
@@ -29,7 +62,7 @@ class AtamanConfigParsingTest {
             parsedBindings.getOrNull()!!, Matchers.equalTo(
                 listOf(
                     LeaderBinding.SingleBinding(
-                        KeyStroke.getKeyStroke(KeyEvent.VK_W, 0, true),
+                        KeyStroke.getKeyStroke(KeyEvent.VK_W, 0),
                         "w",
                         "Split vertically and unsplit",
                         listOf("SplitVertically", "Unsplit")
@@ -56,7 +89,7 @@ class AtamanConfigParsingTest {
             parsedBindings.getOrNull()!!, Matchers.equalTo(
                 listOf(
                     LeaderBinding.SingleBinding(
-                        KeyStroke.getKeyStroke(KeyEvent.VK_Q, 0, true),
+                        KeyStroke.getKeyStroke(KeyEvent.VK_Q, 0),
                         "q",
                         "Open ~/.atamanrc.config",
                         "OpenAtamanConfigAction",
@@ -67,11 +100,12 @@ class AtamanConfigParsingTest {
     }
 
     @Test
-    fun `supports f keys`() {
+    fun `supports f keys and does not mistake them with capitalized F`() {
         val parsedBindings = parseConfig(
             configDir = tmpFolder.setupStubConfigDir(
                 text = """
                 |bindings { 
+                |  F { actionId: Unsplit, description: Unsplit }
                 |  F1 { actionId: CommentByLineComment, description: Comment }
                 |  F12 { actionId: OpenAtamanConfigAction, description: Open ~/.atamanrc.config } 
                 |}""".trimMargin()
@@ -82,13 +116,19 @@ class AtamanConfigParsingTest {
             parsedBindings.getOrNull()!!, Matchers.equalTo(
                 listOf(
                     LeaderBinding.SingleBinding(
-                        KeyStroke.getKeyStroke(KeyEvent.VK_F1, 0, true),
+                        KeyStroke.getKeyStroke(KeyEvent.VK_F, KeyEvent.SHIFT_DOWN_MASK),
+                        "F",
+                        "Unsplit",
+                        "Unsplit",
+                    ),
+                    LeaderBinding.SingleBinding(
+                        KeyStroke.getKeyStroke(KeyEvent.VK_F1, 0),
                         "F1",
                         "Comment",
                         "CommentByLineComment",
                     ),
                     LeaderBinding.SingleBinding(
-                        KeyStroke.getKeyStroke(KeyEvent.VK_F12, 0, true),
+                        KeyStroke.getKeyStroke(KeyEvent.VK_F12, 0),
                         "F12",
                         "Open ~/.atamanrc.config",
                         "OpenAtamanConfigAction",
@@ -133,16 +173,18 @@ class AtamanConfigParsingTest {
             ),
             ideProductKey = "IC"
         )
+        parsedBindings.exceptionOrNull()?.printStackTrace()
+        assertThat(parsedBindings.exceptionOrNull(), Matchers.nullValue())
         assertThat(
             parsedBindings.getOrNull()!!, Matchers.equalTo(
                 listOf(
                     LeaderBinding.GroupBinding(
-                        KeyStroke.getKeyStroke(KeyEvent.VK_Q, 0, true),
+                        KeyStroke.getKeyStroke(KeyEvent.VK_Q, 0),
                         "q",
                         "Session...",
                         listOf(
                             LeaderBinding.SingleBinding(
-                                KeyStroke.getKeyStroke(KeyEvent.VK_F, KeyEvent.SHIFT_DOWN_MASK, true),
+                                KeyStroke.getKeyStroke(KeyEvent.VK_F, KeyEvent.SHIFT_DOWN_MASK),
                                 "F",
                                 "Open ~/.atamanrc.config",
                                 "OpenAtamanConfigAction",
