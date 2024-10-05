@@ -4,7 +4,6 @@ import com.intellij.icons.AllIcons
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.actionSystem.ActionUpdateThread
-import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.actionSystem.ex.ActionUtil
@@ -95,8 +94,7 @@ class LeaderListStep(title: String? = null, val dataContext: DataContext, values
         when (selectedValue) {
             is LeaderBinding.SingleBinding -> {
                 doFinalStep {
-                    val action = ActionManager.getInstance().getAction(selectedValue.action)
-                    executeAction(action, dataContext)
+                    executeAction(selectedValue.action, dataContext)
                 }
             }
             is LeaderBinding.GroupBinding -> LeaderListStep(null, dataContext, selectedValue.bindings)
@@ -105,14 +103,17 @@ class LeaderListStep(title: String? = null, val dataContext: DataContext, values
 
     override fun getBackgroundFor(value: LeaderBinding?) = UIUtil.getPanelBackground()
 
-    private fun executeAction(action: AnAction, context: DataContext) {
-        val event = AnActionEvent(
-            null, context, ActionPlaces.KEYBOARD_SHORTCUT, action.templatePresentation.clone(),
-            ActionManager.getInstance(), 0
-        )
-        ActionUtil.performDumbAwareUpdate(action, event, true)
-        ActionUtil.invokeAction(action, context, ActionPlaces.KEYBOARD_SHORTCUT, null, null)
-    }
+}
+
+fun executeAction(actionId: String, context: DataContext) {
+    val action = ActionManager.getInstance().getAction(actionId)
+    val event = AnActionEvent(
+        null, context, ActionPlaces.KEYBOARD_SHORTCUT, action.templatePresentation.clone(),
+        ActionManager.getInstance(), 0
+    )
+    ActionUtil.performDumbAwareUpdate(action, event, true)
+    ActionUtil.invokeAction(action, context, ActionPlaces.KEYBOARD_SHORTCUT, null, null)
+    service<ConfigService>().latestCommand = actionId
 }
 
 class LeaderPopup(

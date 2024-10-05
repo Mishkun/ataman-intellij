@@ -46,7 +46,10 @@
         </action>
         <!--suppress PluginXmlCapitalization -->
         <action id="ReloadAtamanConfigAction" class="io.github.mishkun.ataman.ReloadAtamanConfigAction"
-                text="Reload ~/.atamanrc.config File"
+                text="Ataman: Reload ~/.atamanrc.config File"
                 description="Attempts to read ~/.atamanrc.config and parse bindings from it"/>
+        <action id="RepeatLatestAtamanCommandAction" class="io.github.mishkun.ataman.RepeatLatestAtamanCommandAction"
+                text="Ataman: Repeat Latest Command"
+                description="Repeats the latest command that was triggered by Ataman"/>
     </actions>
 </idea-plugin>

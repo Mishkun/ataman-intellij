@@ -6,6 +6,7 @@ import java.io.File
 @Service
 class ConfigService {
     var parsedBindings: List<LeaderBinding> = emptyList()
+    var latestCommand: String? = null
 }
 
 class Config {

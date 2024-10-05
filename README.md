@@ -14,7 +14,7 @@ IdeaVim productivity or just to have a more convenient way to access actions, as
 
 ## Rationale
 
-Intellij Idea is notorious for its tricky keybindings involving multiple modifiers and F1-F12 keys. Another approach of
+IntelliJ IDEA is notorious for its tricky keybindings involving multiple modifiers and F1-F12 keys. Another approach of
 using `Cmd+Shift+A` command pallete and search for most of the actions, reducing the speed.
 
 There is another way, popularized by Spacemacs and Doom Emacs – leader (or sticky) keys. It works fairly simple – you
@@ -44,6 +44,12 @@ vnoremap <Space> :action LeaderAction<cr>
 ```
 
 to your `~/.ideavimrc` file. This way leader key will work unless you are entering text anywhere
+
+## Other actions
+
+- `Ataman: Open or Create ~/atamanrc.config` - opens your config file in the editor (creates if it does not exist yet)
+- `Ataman: Reload ~/.atamanrc.config File` - reloads your config file. Call this action after editing your config
+- `Ataman: Repeat Latest Command` - repeats the last command executed by Ataman
 
 ## Config structure
 
