@@ -76,6 +76,17 @@ fun parseConfig(configDir: File): Result<List<LeaderBinding>> {
     }
 }
 
+fun getKeyStroke(key: String): KeyStroke = when (key.length) {
+    1 -> getKeyStroke(key[0])
+    else -> getFKeyStroke(key)
+}
+
+fun getFKeyStroke(key: String): KeyStroke = KeyStroke.getKeyStroke(
+    key.substringAfter("F").toInt() + 111,
+    0,
+    true
+)
+
 fun getKeyStroke(char: Char): KeyStroke = KeyStroke.getKeyStroke(
     KeyEvent.getExtendedKeyCodeForChar(char.code),
     if (char.isUpperCase()) KeyEvent.SHIFT_DOWN_MASK else 0,
@@ -94,27 +105,26 @@ private fun execFile(file: File): List<Pair<String, Any>> =
 private fun buildBindingsTree(bindingConfig: List<Pair<String, Any>>): Pair<List<LeaderBinding>, List<String>> {
     val errors = mutableListOf<String>()
     val bindings = bindingConfig.mapNotNull { (keyword, bodyObject) ->
-        val key = keyword.first()
         val body = bodyObject as Map<String, Any>
         val description = bodyObject[DESCRIPTION_KEYWORD] as String
         when {
             body.containsKey(ACTION_ID_KEYWORD) -> {
                 val actionId = body[ACTION_ID_KEYWORD] as String
-                LeaderBinding.SingleBinding(getKeyStroke(key), key, description, actionId)
+                LeaderBinding.SingleBinding(getKeyStroke(keyword), keyword, description, actionId)
             }
 
             body.containsKey(BINDINGS_KEYWORD) -> {
                 val childBindingsObject = body[BINDINGS_KEYWORD] as Map<String, Any>
                 val childBindings = buildBindingsTree(childBindingsObject.toList()).first
-                LeaderBinding.GroupBinding(getKeyStroke(key), key, description, childBindings)
+                LeaderBinding.GroupBinding(getKeyStroke(keyword), keyword, description, childBindings)
             }
 
             else -> {
-                errors.add("Expected either $ACTION_ID_KEYWORD or $BINDINGS_KEYWORD for key $key, but got $keyword")
+                errors.add("Expected either $ACTION_ID_KEYWORD or $BINDINGS_KEYWORD for $keyword but got $bodyObject")
                 null
             }
         }
-    }.sortedByDescending { it.char }.sortedBy { it.char.lowercaseChar() }
+    }.sortedByDescending { it.char }.sortedBy { it.char.lowercase() }
     return bindings to errors
 }
 

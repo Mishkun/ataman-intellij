@@ -83,7 +83,7 @@ class AtamanActionTest {
         this.ui.robot.waitForIdle()
         this.ui.robot.pressAndReleaseKey(KeyEvent.VK_Q)
         this.ui.robot.waitForIdle()
-        this.ui.robot.pressAndReleaseKey(KeyEvent.VK_E)
+        this.ui.robot.pressAndReleaseKey(KeyEvent.VK_F1)
         this.ui.robot.waitForIdle()
         return this.welcomeScreen {
             this.isVisible()

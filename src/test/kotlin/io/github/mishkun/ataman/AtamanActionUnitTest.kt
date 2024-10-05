@@ -26,7 +26,7 @@ class AtamanActionUnitTest : LightPlatform4TestCase() {
         val bindings = listOf(
             LeaderBinding.SingleBinding(
                 getKeyStroke('c'),
-                'c',
+                "c",
                 "CommentAction",
                 "CommentByLineComment"
             )
