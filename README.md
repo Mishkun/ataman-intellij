@@ -8,7 +8,9 @@
 
 > Ataman - an elected leader of the Cossack troops and settlements
 
-Ataman is an Intellij Idea plugin for using leader key for bindings (almost like in Spacemacs)
+Ataman is an Intellij Idea plugin for using leader key for bindings (almost like in Spacemacs). Great way to enchance
+your
+IdeaVim productivity or just to have a more convenient way to access actions, as it is not required.
 
 ## Rationale
 
@@ -64,6 +66,8 @@ bindings { # always present
         }
         # actionId: ... -- error! do not mix actionId and bindings clause together! 
       }
+      # You can use F keys as well
+      F12 {actionId: CloseProject, description: Close Project}
     }
   }
 }
