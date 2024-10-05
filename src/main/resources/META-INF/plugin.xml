@@ -6,7 +6,7 @@
     <description><![CDATA[
     Ataman is a plugin for adding a spacemacs-style leader-based keybindings.
 
-    This plugin adds two actions to open a spacemacs-style leader menu.
+    This plugin adds two actions to open a spacemacs-style leader menu. Great for users of IdeaVim!
     <ul>
     <li><em>LeaderAction</em> can be used to access leader menu everywhere</li>
     <li><em>TransparentLeaderAction</em> triggers only when no editable text is focused</li>
@@ -16,6 +16,8 @@
     for TransparentLeaderAction and add `:nnoremap <Space> :action LeaderAction<cr>`
     to your ~/.ideavimrc file. This way SPACE will work as a leader unless you are entering
     some text anywhere
+
+    More info and examples can be found at the plugin's GitHub.
     ]]></description>
 
     <!-- please see https://www.jetbrains.org/intellij/sdk/docs/basics/getting_started/plugin_compatibility.html
