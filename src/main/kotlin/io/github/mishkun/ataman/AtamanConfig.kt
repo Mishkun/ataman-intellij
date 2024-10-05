@@ -143,8 +143,20 @@ private fun buildBindingsTree(bindingConfig: List<Pair<String, Any>>): Pair<List
         val description = bodyObject[DESCRIPTION_KEYWORD] as String
         when {
             body.containsKey(ACTION_ID_KEYWORD) -> {
-                val actionId = body[ACTION_ID_KEYWORD] as String
-                LeaderBinding.SingleBinding(getKeyStroke(keyword), keyword, description, actionId)
+                when (val actionId = body[ACTION_ID_KEYWORD]) {
+                    is String -> LeaderBinding.SingleBinding(getKeyStroke(keyword), keyword, description, actionId)
+                    is List<*> -> LeaderBinding.SingleBinding(
+                        getKeyStroke(keyword),
+                        keyword,
+                        description,
+                        actionId as List<String>
+                    )
+
+                    else -> {
+                        errors.add("Expected either String or List<String> for $ACTION_ID_KEYWORD but got $actionId")
+                        null
+                    }
+                }
             }
 
             body.containsKey(BINDINGS_KEYWORD) -> {

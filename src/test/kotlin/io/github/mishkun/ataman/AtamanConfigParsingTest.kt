@@ -15,6 +15,31 @@ class AtamanConfigParsingTest {
     val tmpFolder = TemporaryFolder()
 
     @Test
+    fun `supports multibindings`() {
+        val parsedBindings = parseConfig(
+            configDir = tmpFolder.setupStubConfigDir(
+                text = """
+                |bindings { 
+                |  w { actionId: [SplitVertically, Unsplit], description: Split vertically and unsplit }
+                |}""".trimMargin()
+            ),
+            ideProductKey = "IC"
+        )
+        assertThat(
+            parsedBindings.getOrNull()!!, Matchers.equalTo(
+                listOf(
+                    LeaderBinding.SingleBinding(
+                        KeyStroke.getKeyStroke(KeyEvent.VK_W, 0, true),
+                        "w",
+                        "Split vertically and unsplit",
+                        listOf("SplitVertically", "Unsplit")
+                    )
+                )
+            )
+        )
+    }
+
+    @Test
     fun `merges ide specific config`() {
         val parsedBindings = parseConfig(
             configDir = tmpFolder.setupStubConfigDir(

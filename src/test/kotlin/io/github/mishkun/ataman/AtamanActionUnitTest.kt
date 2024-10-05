@@ -21,6 +21,36 @@ class AtamanActionUnitTest : LightPlatform4TestCase() {
     }
 
     @Test
+    fun `executes multiple actions`() {
+        application.messageBus.connect().subscribe(AnActionListener.TOPIC, myActionListener)
+        val bindings = listOf(
+            LeaderBinding.SingleBinding(
+                getKeyStroke('w'),
+                "w",
+                "split and unsplit",
+                listOf("SplitVertically", "Unsplit")
+            )
+        )
+        val popup = LeaderPopup(
+            project,
+            LeaderListStep(
+                "Ataman",
+                dataContext(),
+                bindings,
+            )
+        )
+        popup.selectAndExecuteValue('w')
+        popup.handleSelect(true)
+        assertThat(
+            recentActions,
+            Matchers.containsInRelativeOrder(
+                "SplitVerticallyAction",
+                "Unsplit"
+            )
+        )
+    }
+
+    @Test
     fun `executes action`() {
         application.messageBus.connect().subscribe(AnActionListener.TOPIC, myActionListener)
         val bindings = listOf(
@@ -35,7 +65,7 @@ class AtamanActionUnitTest : LightPlatform4TestCase() {
             project,
             LeaderListStep(
                 "Ataman",
-                DataManager.getInstance().dataContext,
+                dataContext(),
                 bindings,
             )
         )
@@ -43,4 +73,7 @@ class AtamanActionUnitTest : LightPlatform4TestCase() {
         popup.handleSelect(true)
         assertThat(recentActions, Matchers.contains("CommentByLineCommentAction"))
     }
+
+    @Suppress("DEPRECATION")
+    private fun dataContext() = DataManager.getInstance().dataContext
 }

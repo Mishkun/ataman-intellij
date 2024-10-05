@@ -11,8 +11,15 @@ sealed class LeaderBinding {
         override val key: KeyStroke,
         override val char: String,
         override val description: String,
-        val action: String
-    ) : LeaderBinding()
+        val action: List<String>
+    ) : LeaderBinding() {
+        constructor(
+            key: KeyStroke,
+            char: String,
+            description: String,
+            action: String
+        ) : this(key, char, description, listOf(action))
+    }
 
     data class GroupBinding(
         override val key: KeyStroke,

@@ -94,7 +94,9 @@ class LeaderListStep(title: String? = null, val dataContext: DataContext, values
         when (selectedValue) {
             is LeaderBinding.SingleBinding -> {
                 doFinalStep {
-                    executeAction(selectedValue.action, dataContext)
+                    selectedValue.action.forEach { action ->
+                        executeAction(action, dataContext)
+                    }
                 }
             }
             is LeaderBinding.GroupBinding -> LeaderListStep(null, dataContext, selectedValue.bindings)

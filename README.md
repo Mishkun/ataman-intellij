@@ -63,7 +63,6 @@ bindings { # always present
     bindings {
       # some leaves with actions to call
       r { actionId: RefactoringMenu, description: Refactor this... }
-      f { actionId: ReformatCode, description: Reformat code }
       c { # you can nest arbitrary amount of tree groups
         description: Compile/Run...
         bindings { 
@@ -74,6 +73,9 @@ bindings { # always present
       }
       # You can use F keys as well
       F12 {actionId: CloseProject, description: Close Project}
+      
+      # You can also do multiple actions in a row
+      f { actionId: [ReformatCode, OptimizeImports], description: Reformat and Optimize Imports }
     }
   }
 }
