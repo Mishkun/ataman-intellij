@@ -69,7 +69,7 @@ intellijPlatform {
         version = project.version.toString()
         ideaVersion {
             sinceBuild = "231"
-            untilBuild = ""
+            untilBuild = "243.*"
         }
     }
     pluginVerification {

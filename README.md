@@ -1,4 +1,4 @@
-<img src="src/main/resources/META-INF/pluginIcon.svg" width="120" height="120" alt="icon" align="left"/>
+<img src="src/main/resources/META-INF/pluginIcon.svg" width="120" height="120" alt="icon"/>
 
 # Ataman
 
@@ -70,6 +70,22 @@ bindings { # always present
       F12 {actionId: CloseProject, description: Close Project}
     }
   }
+}
+
+# You can also have ide-specific bindings
+# For example, to have different bindings for PyCharm, use its product code
+# To find out product code, look at the about screen build info section
+# Build #<ide tag will be here>-242.23339.11
+PY {
+  # This binding will override defaults for PyCharm
+  c {
+    description: Closing...
+    bindings {
+      r { actionId: CloseProject, description: Close Project }
+    }
+  }
+  # This binding will be added to the list for PyCharm
+  F12 { actionId: CloseProject, description: Close Project }
 }
 ```
 

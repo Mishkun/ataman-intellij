@@ -11,6 +11,7 @@ import java.io.IOException
 import javax.swing.KeyStroke
 
 const val ATAMAN_RC_FILENAME = ".atamanrc.config"
+private const val COMMON_BINDINGS_KEY = "bindings"
 
 val RC_TEMPLATE = """
         # This file is written in HOCON (Human-Optimized Config Object Notation) format. 
@@ -26,8 +27,9 @@ val RC_TEMPLATE = """
         }
     """.trimIndent()
 
-fun updateConfig(project: Project, configDir: File) {
-    parseConfig(configDir).fold(onSuccess = { values ->
+fun updateConfig(project: Project, configDir: File, ideProductKey: String) {
+    parseConfig(configDir, ideProductKey).fold(
+        onSuccess = { values ->
         service<ConfigService>().parsedBindings = values
     },
         onFailure = { error ->
@@ -64,10 +66,34 @@ private fun Project.showNotification(
         .notify(this)
 }
 
-fun parseConfig(configDir: File): Result<List<LeaderBinding>> {
+fun mergeBindings(bindingConfig: List<LeaderBinding>, overrideConfig: List<LeaderBinding>): List<LeaderBinding> {
+    val commonBindingsMap = bindingConfig.associateBy { it.char }
+    val productBindingsMap = overrideConfig.associateBy { it.char }
+    val commonKeys = commonBindingsMap.keys.toSet().intersect(productBindingsMap.keys)
+    val mergedBindings = commonKeys.associateWith { key ->
+        val commonBinding = commonBindingsMap.getValue(key)
+        val productBinding = productBindingsMap.getValue(key)
+        when {
+            commonBinding is LeaderBinding.GroupBinding && productBinding is LeaderBinding.GroupBinding -> {
+                productBinding.copy(
+                    bindings = mergeBindings(commonBinding.bindings, productBinding.bindings)
+                )
+            }
+
+            else -> productBinding
+        }
+    }
+    return (commonBindingsMap + productBindingsMap + mergedBindings).values.toList()
+}
+
+fun parseConfig(configDir: File, ideProductKey: String): Result<List<LeaderBinding>> {
     return runCatching {
         val rcFile = findOrCreateRcFile(configDir)
-        val (bindings, throwables) = buildBindingsTree(execFile(rcFile))
+        val config = execFile(rcFile)
+        val (commonBindingsParsed, commonThrowables) = buildBindingsTree(config, COMMON_BINDINGS_KEY)
+        val (productBindingsParsed, productThrowables) = buildBindingsTree(config, ideProductKey)
+        val bindings = mergeBindings(commonBindingsParsed, productBindingsParsed)
+        val throwables = commonThrowables + productThrowables
         if (throwables.isNotEmpty()) {
             throw IllegalStateException(throwables.joinToString("\n"))
         } else {
@@ -93,13 +119,21 @@ fun getKeyStroke(char: Char): KeyStroke = KeyStroke.getKeyStroke(
     true
 )
 
-private const val BINDINGS_KEYWORD = "bindings"
+private const val BINDINGS_KEYWORD = COMMON_BINDINGS_KEY
 private const val DESCRIPTION_KEYWORD = "description"
 private const val ACTION_ID_KEYWORD = "actionId"
 
 @Suppress("UNCHECKED_CAST")
-private fun execFile(file: File): List<Pair<String, Any>> =
-    (ConfigFactory.parseFile(file).root().unwrapped()[BINDINGS_KEYWORD] as Map<String, Any>).toList()
+private fun execFile(file: File): Map<String, List<Pair<String, Any>>> =
+    (ConfigFactory.parseFile(file).root().unwrapped() as Map<String, Map<String, Any>>).mapValues { it.value.toList() }
+
+private fun buildBindingsTree(
+    rootBindingConfig: Map<String, List<Pair<String, Any>>>,
+    key: String
+): Pair<List<LeaderBinding>, List<String>> {
+    val commonBindings = rootBindingConfig[key] ?: emptyList()
+    return buildBindingsTree(commonBindings)
+}
 
 @Suppress("UNCHECKED_CAST")
 private fun buildBindingsTree(bindingConfig: List<Pair<String, Any>>): Pair<List<LeaderBinding>, List<String>> {

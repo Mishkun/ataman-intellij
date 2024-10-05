@@ -15,6 +15,33 @@ class AtamanConfigParsingTest {
     val tmpFolder = TemporaryFolder()
 
     @Test
+    fun `merges ide specific config`() {
+        val parsedBindings = parseConfig(
+            configDir = tmpFolder.setupStubConfigDir(
+                text = """
+                |bindings { 
+                |  q { actionId: CommentByLineComment, description: Comment }
+                |}
+                |IU {
+                | q { actionId: OpenAtamanConfigAction, description: Open ~/.atamanrc.config }
+                |}""".trimMargin()
+            ), ideProductKey = "IU"
+        )
+        assertThat(
+            parsedBindings.getOrNull()!!, Matchers.equalTo(
+                listOf(
+                    LeaderBinding.SingleBinding(
+                        KeyStroke.getKeyStroke(KeyEvent.VK_Q, 0, true),
+                        "q",
+                        "Open ~/.atamanrc.config",
+                        "OpenAtamanConfigAction",
+                    )
+                )
+            )
+        )
+    }
+
+    @Test
     fun `supports f keys`() {
         val parsedBindings = parseConfig(
             configDir = tmpFolder.setupStubConfigDir(
@@ -23,7 +50,8 @@ class AtamanConfigParsingTest {
                 |  F1 { actionId: CommentByLineComment, description: Comment }
                 |  F12 { actionId: OpenAtamanConfigAction, description: Open ~/.atamanrc.config } 
                 |}""".trimMargin()
-            )
+            ),
+            ideProductKey = "IC"
         )
         assertThat(
             parsedBindings.getOrNull()!!, Matchers.equalTo(
@@ -48,7 +76,8 @@ class AtamanConfigParsingTest {
     @Test
     fun `returns error on malformed config`() {
         val parsedBindings = parseConfig(
-            configDir = tmpFolder.setupStubConfigDir(text = "}malformed{")
+            configDir = tmpFolder.setupStubConfigDir(text = "}malformed{"),
+            ideProductKey = "IC"
         )
         assertThat(parsedBindings.isFailure, Matchers.equalTo(true))
     }
@@ -56,7 +85,8 @@ class AtamanConfigParsingTest {
     @Test
     fun `throws if bindings are not set up properly`() {
         val parsedBindings = parseConfig(
-            configDir = tmpFolder.setupStubConfigDir(text = "bindings { q { description: Session } }")
+            configDir = tmpFolder.setupStubConfigDir(text = "bindings { q { description: Session } }"),
+            ideProductKey = "IC"
         )
         assertThat(parsedBindings.isFailure, Matchers.equalTo(true))
         println(parsedBindings.exceptionOrNull())
@@ -75,7 +105,8 @@ class AtamanConfigParsingTest {
                 |    }
                 |  }
                 |}""".trimMargin()
-            )
+            ),
+            ideProductKey = "IC"
         )
         assertThat(
             parsedBindings.getOrNull()!!, Matchers.equalTo(
