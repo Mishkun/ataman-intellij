@@ -58,13 +58,13 @@ repositories {
 }
 
 group = "io.github.mishkun"
-version = "1.1.2"
+version = "1.2.0"
 
 intellijPlatform {
     instrumentCode.set(false)
     pluginConfiguration {
         changeNotes = """
-                Updated plugin to work with IntelliJ IDEA 2024.2.3
+                Add F1-F12 bindings support
             """.trimIndent()
         version = project.version.toString()
         ideaVersion {
