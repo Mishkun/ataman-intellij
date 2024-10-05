@@ -58,14 +58,18 @@ repositories {
 }
 
 group = "io.github.mishkun"
-version = "1.2.0"
+version = "1.3.0"
 
 intellijPlatform {
     instrumentCode.set(false)
     pluginConfiguration {
         changeNotes = """
-                Add F1-F12 bindings support
-            """.trimIndent()
+            Add support for special characters with shift (Fix #9)
+            Add option to perform multiple actions in one binding (Fix #11)
+            Add repeat latest command action (Fix #2)
+            Add option to create IDE-specific bindings (Fix #4)
+            Use monospace font for key labels to make them aligned (Fix #15)
+        """.trimIndent()
         version = project.version.toString()
         ideaVersion {
             sinceBuild = "231"
