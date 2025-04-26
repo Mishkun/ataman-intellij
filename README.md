@@ -4,6 +4,7 @@
 
 [![JetBrains IntelliJ Plugins](https://img.shields.io/jetbrains/plugin/v/17567-ataman?label=version)](https://plugins.jetbrains.com/plugin/17567-ataman)
 [![jb downloads](https://img.shields.io/jetbrains/plugin/d/17567-ataman?label=downloads)](https://plugins.jetbrains.com/plugin/17567-ataman)
+[![Build & Test](https://github.com/mishkun/ataman-intellij/workflows/Build%20&%20Test/badge.svg)](https://github.com/mishkun/ataman-intellij/actions)
 
 
 > Ataman - an elected leader of the Cossack troops and settlements
@@ -111,6 +112,14 @@ To build plugin, use this command:
 ```
 ./gradlew buildPlugin
 ```
+
+For running tests:
+
+```
+./gradlew test       # Unit tests
+./gradlew uiTests    # UI tests
+```
+
 For more advanced usecases, please refer to gradle-intellij-plugin documentation.
 
 ## License
