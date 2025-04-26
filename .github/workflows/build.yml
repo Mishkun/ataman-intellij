@@ -1,0 +1,57 @@
+name: Build & Test
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Set up JDK 17
+        uses: actions/setup-java@v3
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+          cache: gradle
+      - name: Build with Gradle
+        run: ./gradlew build
+      - name: Run unit tests
+        run: ./gradlew test
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: plugin-archive
+          path: build/libs/*.jar
+
+  ui-tests:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Set up JDK 17
+        uses: actions/setup-java@v3
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+          cache: gradle
+      - name: Download build artifacts
+        uses: actions/download-artifact@v3
+        with:
+          name: plugin-archive
+          path: build/libs
+      - name: Run UI Tests
+        uses: GabrielBB/xvfb-action@v1
+        with:
+          run: ./gradlew uiTests
+      - name: Upload test reports
+        if: always()
+        uses: actions/upload-artifact@v3
+        with:
+          name: ui-test-reports
+          path: |
+            build/reports/tests/
+            allure-results/
