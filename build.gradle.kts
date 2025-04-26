@@ -9,12 +9,12 @@ plugins {
 }
 
 kotlin {
-    jvmToolchain(17)
+    jvmToolchain(21)
 }
 
 java {
     toolchain {
-        languageVersion = JavaLanguageVersion.of(17)
+        languageVersion = JavaLanguageVersion.of(21)
     }
 }
 
@@ -59,7 +59,7 @@ val uiTests by intellijPlatformTesting.testIdeUi.registering {
 
 tasks.withType<Test>().configureEach {
     javaLauncher.set(javaToolchains.launcherFor {
-        languageVersion.set(JavaLanguageVersion.of(17))
+        languageVersion.set(JavaLanguageVersion.of(21))
     })
 }
 
@@ -85,7 +85,7 @@ intellijPlatform {
         """.trimIndent()
         version = project.version.toString()
         ideaVersion {
-            sinceBuild = "231"
+            sinceBuild = "242"
             untilBuild = "243.*"
         }
     }
@@ -94,7 +94,7 @@ intellijPlatform {
             select {
                 types.set(listOf(IntelliJPlatformType.IntellijIdeaCommunity))
                 channels.set(listOf(ProductRelease.Channel.RELEASE))
-                sinceBuild = "231"
+                sinceBuild = "242"
                 untilBuild = "243.*"
             }
         }
