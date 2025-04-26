@@ -104,23 +104,35 @@ fun parseConfig(configDir: File, ideProductKey: String): Result<List<LeaderBindi
 }
 private val keyStrokeMap = KeyStrokeMap()
 
-fun getKeyStroke(key: String): KeyStroke {
+// Extension function to get a keystroke from the map with the isLeafBinding parameter
+private fun KeyStrokeMap.get(char: Char, isLeafBinding: Boolean): KeyStroke {
+    val keyStroke = get(char)
+    // If we need to override the release value
+    return KeyStroke.getKeyStroke(
+        keyStroke.keyCode,
+        keyStroke.modifiers,
+        isLeafBinding // Use key release only for leaf bindings
+    )
+}
+
+fun getKeyStroke(key: String, isLeafBinding: Boolean = false): KeyStroke {
     val trimmedKey = key.trim('"')
     return when (trimmedKey.length) {
-        1 -> keyStrokeMap.get(trimmedKey[0])
-        else -> getFKeyStroke(key)
+        1 -> keyStrokeMap.get(trimmedKey[0], isLeafBinding)
+        else -> getFKeyStroke(key, isLeafBinding)
     }
 }
 
-fun getFKeyStroke(key: String): KeyStroke = KeyStroke.getKeyStroke(
+fun getFKeyStroke(key: String, isLeafBinding: Boolean = false): KeyStroke = KeyStroke.getKeyStroke(
     key.substringAfter("F").toInt() + 111,
-    0
+    0,
+    isLeafBinding // Only leaf bindings use key release
 )
 
-fun getKeyStroke(char: Char): KeyStroke = KeyStroke.getKeyStroke(
+fun getKeyStroke(char: Char, isLeafBinding: Boolean = false): KeyStroke = KeyStroke.getKeyStroke(
     KeyEvent.getExtendedKeyCodeForChar(char.code),
     if (char.isUpperCase()) KeyEvent.SHIFT_DOWN_MASK else 0,
-    true
+    isLeafBinding // Only leaf bindings use key release
 )
 
 private const val BINDINGS_KEYWORD = COMMON_BINDINGS_KEY
@@ -147,10 +159,16 @@ private fun buildBindingsTree(bindingConfig: List<Pair<String, Any>>): Pair<List
         val description = bodyObject[DESCRIPTION_KEYWORD] as String
         when {
             body.containsKey(ACTION_ID_KEYWORD) -> {
+                // This is a leaf binding, should use key release
                 when (val actionId = body[ACTION_ID_KEYWORD]) {
-                    is String -> LeaderBinding.SingleBinding(getKeyStroke(keyword), keyword, description, actionId)
+                    is String -> LeaderBinding.SingleBinding(
+                        getKeyStroke(keyword, isLeafBinding = true), 
+                        keyword, 
+                        description, 
+                        actionId
+                    )
                     is List<*> -> LeaderBinding.SingleBinding(
-                        getKeyStroke(keyword),
+                        getKeyStroke(keyword, isLeafBinding = true),
                         keyword,
                         description,
                         actionId as List<String>
@@ -164,9 +182,15 @@ private fun buildBindingsTree(bindingConfig: List<Pair<String, Any>>): Pair<List
             }
 
             body.containsKey(BINDINGS_KEYWORD) -> {
+                // This is a group binding, should use key press
                 val childBindingsObject = body[BINDINGS_KEYWORD] as Map<String, Any>
                 val childBindings = buildBindingsTree(childBindingsObject.toList()).first
-                LeaderBinding.GroupBinding(getKeyStroke(keyword), keyword, description, childBindings)
+                LeaderBinding.GroupBinding(
+                    getKeyStroke(keyword, isLeafBinding = false), 
+                    keyword, 
+                    description, 
+                    childBindings
+                )
             }
 
             else -> {

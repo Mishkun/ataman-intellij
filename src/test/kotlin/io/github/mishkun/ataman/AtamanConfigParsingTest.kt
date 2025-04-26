@@ -27,17 +27,21 @@ class AtamanConfigParsingTest {
             ideProductKey = "IC"
         )
         assertThat(parsedBindings.exceptionOrNull(), Matchers.nullValue())
+        
+        // Get the parsed bindings
+        val bindings = parsedBindings.getOrNull()!!
+        
         assertThat(
-            parsedBindings.getOrNull()!!, Matchers.equalTo(
+            bindings, Matchers.equalTo(
                 listOf(
                     LeaderBinding.SingleBinding(
-                        KeyStroke.getKeyStroke(KeyEvent.VK_PERIOD, 0),
+                        KeyStroke.getKeyStroke(KeyEvent.VK_PERIOD, 0, true), // Use key release for leaf binding
                         ".",
                         "Comment",
                         "CommentByLineComment",
                     ),
                     LeaderBinding.SingleBinding(
-                        KeyStroke.getKeyStroke(KeyEvent.VK_PERIOD, KeyEvent.SHIFT_DOWN_MASK),
+                        KeyStroke.getKeyStroke(KeyEvent.VK_PERIOD, KeyEvent.SHIFT_DOWN_MASK, true), // Use key release for leaf binding
                         ">",
                         "Comment",
                         "CommentByLineComment",
@@ -45,6 +49,11 @@ class AtamanConfigParsingTest {
                 )
             )
         )
+        
+        // Verify that single bindings use key release
+        bindings.forEach {
+            assertThat("Leaf binding should use key release event", (it as LeaderBinding.SingleBinding).key.isOnKeyRelease, Matchers.equalTo(true))
+        }
     }
 
     @Test
@@ -58,11 +67,15 @@ class AtamanConfigParsingTest {
             ),
             ideProductKey = "IC"
         )
+        
+        // Get the parsed bindings
+        val bindings = parsedBindings.getOrNull()!!
+        
         assertThat(
-            parsedBindings.getOrNull()!!, Matchers.equalTo(
+            bindings, Matchers.equalTo(
                 listOf(
                     LeaderBinding.SingleBinding(
-                        KeyStroke.getKeyStroke(KeyEvent.VK_W, 0),
+                        KeyStroke.getKeyStroke(KeyEvent.VK_W, 0, true), // Use key release for leaf binding
                         "w",
                         "Split vertically and unsplit",
                         listOf("SplitVertically", "Unsplit")
@@ -70,6 +83,9 @@ class AtamanConfigParsingTest {
                 )
             )
         )
+        
+        // Verify that single bindings use key release
+        assertThat("Leaf binding should use key release event", (bindings[0] as LeaderBinding.SingleBinding).key.isOnKeyRelease, Matchers.equalTo(true))
     }
 
     @Test
@@ -85,11 +101,15 @@ class AtamanConfigParsingTest {
                 |}""".trimMargin()
             ), ideProductKey = "IU"
         )
+        
+        // Get the parsed bindings
+        val bindings = parsedBindings.getOrNull()!!
+        
         assertThat(
-            parsedBindings.getOrNull()!!, Matchers.equalTo(
+            bindings, Matchers.equalTo(
                 listOf(
                     LeaderBinding.SingleBinding(
-                        KeyStroke.getKeyStroke(KeyEvent.VK_Q, 0),
+                        KeyStroke.getKeyStroke(KeyEvent.VK_Q, 0, true), // Use key release for leaf binding
                         "q",
                         "Open ~/.atamanrc.config",
                         "OpenAtamanConfigAction",
@@ -97,6 +117,9 @@ class AtamanConfigParsingTest {
                 )
             )
         )
+        
+        // Verify that single bindings use key release
+        assertThat("Leaf binding should use key release event", (bindings[0] as LeaderBinding.SingleBinding).key.isOnKeyRelease, Matchers.equalTo(true))
     }
 
     @Test
@@ -112,23 +135,27 @@ class AtamanConfigParsingTest {
             ),
             ideProductKey = "IC"
         )
+        
+        // Get the parsed bindings
+        val bindings = parsedBindings.getOrNull()!!
+        
         assertThat(
-            parsedBindings.getOrNull()!!, Matchers.equalTo(
+            bindings, Matchers.equalTo(
                 listOf(
                     LeaderBinding.SingleBinding(
-                        KeyStroke.getKeyStroke(KeyEvent.VK_F, KeyEvent.SHIFT_DOWN_MASK),
+                        KeyStroke.getKeyStroke(KeyEvent.VK_F, KeyEvent.SHIFT_DOWN_MASK, true), // Use key release
                         "F",
                         "Unsplit",
                         "Unsplit",
                     ),
                     LeaderBinding.SingleBinding(
-                        KeyStroke.getKeyStroke(KeyEvent.VK_F1, 0),
+                        KeyStroke.getKeyStroke(KeyEvent.VK_F1, 0, true), // Use key release
                         "F1",
                         "Comment",
                         "CommentByLineComment",
                     ),
                     LeaderBinding.SingleBinding(
-                        KeyStroke.getKeyStroke(KeyEvent.VK_F12, 0),
+                        KeyStroke.getKeyStroke(KeyEvent.VK_F12, 0, true), // Use key release
                         "F12",
                         "Open ~/.atamanrc.config",
                         "OpenAtamanConfigAction",
@@ -136,6 +163,13 @@ class AtamanConfigParsingTest {
                 )
             )
         )
+        
+        // Verify that all bindings use key release
+        bindings.forEach { binding ->
+            assertThat("Leaf binding should use key release event", 
+                (binding as LeaderBinding.SingleBinding).key.isOnKeyRelease, 
+                Matchers.equalTo(true))
+        }
     }
 
     @Test
@@ -175,16 +209,21 @@ class AtamanConfigParsingTest {
         )
         parsedBindings.exceptionOrNull()?.printStackTrace()
         assertThat(parsedBindings.exceptionOrNull(), Matchers.nullValue())
+        
+        // Get the parsed bindings
+        val bindings = parsedBindings.getOrNull()!!
+        
+        // Check the structure of the bindings
         assertThat(
-            parsedBindings.getOrNull()!!, Matchers.equalTo(
+            bindings, Matchers.equalTo(
                 listOf(
                     LeaderBinding.GroupBinding(
-                        KeyStroke.getKeyStroke(KeyEvent.VK_Q, 0),
+                        KeyStroke.getKeyStroke(KeyEvent.VK_Q, 0, false), // Group binding should use key press (released=false)
                         "q",
                         "Session...",
                         listOf(
                             LeaderBinding.SingleBinding(
-                                KeyStroke.getKeyStroke(KeyEvent.VK_F, KeyEvent.SHIFT_DOWN_MASK),
+                                KeyStroke.getKeyStroke(KeyEvent.VK_F, KeyEvent.SHIFT_DOWN_MASK, true), // Leaf binding should use key release (released=true)
                                 "F",
                                 "Open ~/.atamanrc.config",
                                 "OpenAtamanConfigAction",
@@ -194,5 +233,12 @@ class AtamanConfigParsingTest {
                 )
             )
         )
+        
+        // Verify explicitly that group bindings use key press and leaf bindings use key release
+        val groupBinding = bindings[0] as LeaderBinding.GroupBinding
+        assertThat("Group binding should use key press event", groupBinding.key.isOnKeyRelease, Matchers.equalTo(false))
+        
+        val leafBinding = groupBinding.bindings[0] as LeaderBinding.SingleBinding
+        assertThat("Leaf binding should use key release event", leafBinding.key.isOnKeyRelease, Matchers.equalTo(true))
     }
 }
