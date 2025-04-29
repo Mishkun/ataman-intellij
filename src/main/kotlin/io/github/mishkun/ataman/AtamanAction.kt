@@ -3,6 +3,7 @@ package io.github.mishkun.ataman
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.ActionPlaces
+import com.intellij.openapi.actionSystem.ActionUiKind
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.DataContext
@@ -78,7 +79,14 @@ class LeaderAction : DumbAwareAction() {
                 event.dataContext,
                 values = service<ConfigService>().parsedBindings
             )
-        ).showCenteredInCurrentWindow(event.project!!)
+        ).run {
+            val project = event.project
+            if (project != null) {
+                showCenteredInCurrentWindow(project)
+            } else {
+                showInFocusCenter()
+            }
+        }
     }
 
 }
@@ -109,12 +117,11 @@ class LeaderListStep(title: String? = null, val dataContext: DataContext, values
 
 fun executeAction(actionId: String, context: DataContext) {
     val action = ActionManager.getInstance().getAction(actionId)
-    val event = AnActionEvent(
-        null, context, ActionPlaces.KEYBOARD_SHORTCUT, action.templatePresentation.clone(),
-        ActionManager.getInstance(), 0
+    val event = AnActionEvent.createEvent(
+        action, context, null, ActionPlaces.KEYBOARD_SHORTCUT, ActionUiKind.NONE, null,
     )
     ActionUtil.performDumbAwareUpdate(action, event, true)
-    ActionUtil.invokeAction(action, context, ActionPlaces.KEYBOARD_SHORTCUT, null, null)
+    ActionUtil.invokeAction(action, event, null)
     service<ConfigService>().latestCommand = actionId
 }
 

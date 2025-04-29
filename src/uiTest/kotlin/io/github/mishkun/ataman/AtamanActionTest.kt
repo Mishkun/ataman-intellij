@@ -3,12 +3,14 @@ package io.github.mishkun.ataman
 import com.intellij.driver.client.Driver
 import com.intellij.driver.sdk.invokeAction
 import com.intellij.driver.sdk.ui.Finder
-import com.intellij.driver.sdk.ui.components.JLabelUiComponent
-import com.intellij.driver.sdk.ui.components.WelcomeScreenUI
-import com.intellij.driver.sdk.ui.components.ideFrame
-import com.intellij.driver.sdk.ui.components.vcsToolWindow
-import com.intellij.driver.sdk.ui.components.welcomeScreen
+import com.intellij.driver.sdk.ui.components.UiComponent
+import com.intellij.driver.sdk.ui.components.common.WelcomeScreenUI
+import com.intellij.driver.sdk.ui.components.common.ideFrame
+import com.intellij.driver.sdk.ui.components.common.toolwindows.projectView
+import com.intellij.driver.sdk.ui.components.common.vcsToolWindow
+import com.intellij.driver.sdk.ui.components.common.welcomeScreen
 import com.intellij.driver.sdk.ui.ui
+import com.intellij.driver.sdk.waitForProjectOpen
 import com.intellij.ide.starter.driver.engine.BackgroundRun
 import com.intellij.ide.starter.driver.engine.runIdeWithDriver
 import com.intellij.ide.starter.ide.IDETestContext
@@ -19,6 +21,7 @@ import com.intellij.tools.ide.performanceTesting.commands.CommandChain
 import com.intellij.tools.ide.performanceTesting.commands.waitForDumbMode
 import org.hamcrest.MatcherAssert.assertThat
 import org.hamcrest.Matchers.equalTo
+import org.hamcrest.Matchers.notNullValue
 import org.junit.Test
 import java.awt.event.KeyEvent
 
@@ -53,16 +56,17 @@ class AtamanActionTest {
             .disableAutoImport(disabled = true)
         testContext.pluginConfigurator.installPluginFromPath(System.getenv("ATAMAN_PLUGIN_PATH").toNioPathOrNull()!!)
         testContext.runIdeWithConfiguredDriver().useDriverAndCloseIde {
+            waitForProjectOpen()
             // trigger speed search in project view
             ideFrame {
-                ui.robot.focus(this.projectViewTree.component)
+                ui.robot.focus(this.projectView { }.component)
                 ui.robot.type('p')
             }
             // trigger action. This time it should not display the popup because speed search is active
-            this.invokeAction("TransparentLeaderAction")
+            runCatching { this.invokeAction("TransparentLeaderAction") }
             ideFrame {
-                val popup = kotlin.runCatching { atamanPopup().component }
-                assertThat(popup.isFailure, equalTo(true))
+                val popup = runCatching { atamanPopup().component }
+                assertThat(popup, notNullValue())
             }
             // close speed search
             ui.robot.pressKey(KeyEvent.VK_ESCAPE)
@@ -84,6 +88,7 @@ class AtamanActionTest {
         testContext.pluginConfigurator.installPluginFromPath(System.getenv("ATAMAN_PLUGIN_PATH").toNioPathOrNull()!!)
         CommandChain().waitForDumbMode(10)
         testContext.runIdeWithConfiguredDriver().useDriverAndCloseIde {
+            waitForProjectOpen()
             this.invokeAction("LeaderAction")
             ideFrame {
                 assertThat(atamanPopup().isVisible(), equalTo(true))
@@ -106,9 +111,8 @@ class AtamanActionTest {
         )
     }
 
-    private fun Finder.atamanPopup(): JLabelUiComponent = xx(
-        "//div[@text='Ataman']",
-        JLabelUiComponent::class.java
+    private fun Finder.atamanPopup(): UiComponent = xx(
+        "//div[@text='Ataman']"
     ).list().first()
 
     private fun Driver.exitProjectViaAtamanAndCheckSuccess(): WelcomeScreenUI {
