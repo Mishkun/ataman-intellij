@@ -1,0 +1,1 @@
+Fix compatability issues with Intellij IDEA 2025.1, Bump minimum required version to 2024.2, Fix proper consuming of keys for bindings
