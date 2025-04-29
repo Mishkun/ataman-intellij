@@ -77,12 +77,8 @@ version = "1.3.0"
 intellijPlatform {
     instrumentCode.set(false)
     pluginConfiguration {
-        changeNotes = """
-            Fix compatibility with IntelliJ 2025.1
-            Bump minimal supported version of IntelliJ to 2024.3
-            
-            Use key release for leaf bindings to properly consume user input.
-        """.trimIndent()
+        changeNotes = providers.fileContents(layout.projectDirectory.file("changelog.txt"))
+            .asText.orElse("")
         version = project.version.toString()
         ideaVersion {
             sinceBuild = "243"
