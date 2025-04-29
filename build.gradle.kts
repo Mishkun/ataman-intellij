@@ -78,15 +78,14 @@ intellijPlatform {
     instrumentCode.set(false)
     pluginConfiguration {
         changeNotes = """
-            Add support for special characters with shift (Fix #9)
-            Add option to perform multiple actions in one binding (Fix #11)
-            Add repeat latest command action (Fix #2)
-            Add option to create IDE-specific bindings (Fix #4)
-            Use monospace font for key labels to make them aligned (Fix #15)
+            Fix compatibility with IntelliJ 2025.1
+            Bump minimal supported version of IntelliJ to 2024.3
+            
+            Use key release for leaf bindings to properly consume user input.
         """.trimIndent()
         version = project.version.toString()
         ideaVersion {
-            sinceBuild = "242"
+            sinceBuild = "243"
             untilBuild = "252.*"
         }
     }
@@ -95,7 +94,7 @@ intellijPlatform {
             select {
                 types.set(listOf(IntelliJPlatformType.IntellijIdeaCommunity))
                 channels.set(listOf(ProductRelease.Channel.RELEASE))
-                sinceBuild = "242"
+                sinceBuild = "243"
                 untilBuild = "252.*"
             }
         }
