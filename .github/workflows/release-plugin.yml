@@ -1,0 +1,91 @@
+name: Build & Release Plugin
+
+on:
+  workflow_dispatch:
+    inputs:
+      release_type:
+        description: 'Release Type'
+        required: true
+        default: 'patch'
+        type: choice
+        options:
+          - patch
+          - minor
+          - major
+      release_notes:
+        description: 'Release Notes'
+        required: true
+        type: string
+
+jobs:
+  build-and-release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+          cache: gradle
+      
+      - name: Get current version
+        id: get_current_version
+        run: echo "CURRENT_VERSION=$(grep 'version =' build.gradle.kts | head -n 1 | cut -d '"' -f 2)" >> $GITHUB_OUTPUT
+
+      - name: Calculate new version
+        id: calculate_version
+        run: |
+          CURRENT_VERSION=${{ steps.get_current_version.outputs.CURRENT_VERSION }}
+          RELEASE_TYPE=${{ github.event.inputs.release_type }}
+          
+          major=$(echo $CURRENT_VERSION | cut -d. -f1)
+          minor=$(echo $CURRENT_VERSION | cut -d. -f2)
+          patch=$(echo $CURRENT_VERSION | cut -d. -f3)
+          
+          if [ "$RELEASE_TYPE" == "major" ]; then
+            major=$((major + 1))
+            minor=0
+            patch=0
+          elif [ "$RELEASE_TYPE" == "minor" ]; then
+            minor=$((minor + 1))
+            patch=0
+          else
+            patch=$((patch + 1))
+          fi
+          
+          NEW_VERSION="${major}.${minor}.${patch}"
+          echo "NEW_VERSION=${NEW_VERSION}" >> $GITHUB_OUTPUT
+
+      - name: Update version in build.gradle.kts
+        run: |
+          sed -i "s/version = \"${{ steps.get_current_version.outputs.CURRENT_VERSION }}\"/version = \"${{ steps.calculate_version.outputs.NEW_VERSION }}\"/" build.gradle.kts
+
+      - name: Create changelog file
+        run: |
+          echo "${{ github.event.inputs.release_notes }}" > changelog.txt
+      
+      - name: Build plugin
+        run: ./gradlew buildPlugin
+
+      - name: Commit version bump and changelog
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          git add build.gradle.kts changelog.txt
+          git commit -m "Bump version to ${{ steps.calculate_version.outputs.NEW_VERSION }}"
+          git tag -a "v${{ steps.calculate_version.outputs.NEW_VERSION }}" -m "Version ${{ steps.calculate_version.outputs.NEW_VERSION }}"
+          git push --follow-tags
+      
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v${{ steps.calculate_version.outputs.NEW_VERSION }}
+          name: Release v${{ steps.calculate_version.outputs.NEW_VERSION }}
+          body: ${{ github.event.inputs.release_notes }}
+          files: build/libs/*.jar
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
