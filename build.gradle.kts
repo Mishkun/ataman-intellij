@@ -4,8 +4,8 @@ import org.jetbrains.intellij.platform.gradle.models.ProductRelease
 
 plugins {
     kotlin("jvm") version "2.0.20"
-    id("org.jetbrains.intellij.platform") version "2.1.0"
-    id("org.jetbrains.kotlinx.kover") version "0.9.0-RC"
+    id("org.jetbrains.intellij.platform") version "2.5.0"
+    id("org.jetbrains.kotlinx.kover") version "0.9.1"
 }
 
 kotlin {
@@ -46,13 +46,14 @@ kover {
 
 val uiTests by intellijPlatformTesting.testIdeUi.registering {
     this.type = IntelliJPlatformType.IntellijIdeaCommunity
-    version.set("2024.2.3")
+    version.set("2025.1")
     task {
         enabled = gradle.startParameter.taskNames.any { it.contains("uiTests") }
         archiveFile.set(tasks.buildPlugin.flatMap { it.archiveFile })
         testClassesDirs = uiTest.get().output.classesDirs
         classpath = uiTest.get().compileClasspath + uiTest.get().runtimeClasspath
         systemProperty("ataman.configFolder", layout.projectDirectory.dir("example-config").asFile.absolutePath)
+        systemProperty("intellij.testFramework.rethrow.logged.errors", "true")
         environment("ATAMAN_PLUGIN_PATH", tasks.buildPlugin.flatMap { it.archiveFile }.get().asFile.absolutePath)
     }
 }
@@ -86,7 +87,7 @@ intellijPlatform {
         version = project.version.toString()
         ideaVersion {
             sinceBuild = "242"
-            untilBuild = "243.*"
+            untilBuild = "252.*"
         }
     }
     pluginVerification {
@@ -95,7 +96,7 @@ intellijPlatform {
                 types.set(listOf(IntelliJPlatformType.IntellijIdeaCommunity))
                 channels.set(listOf(ProductRelease.Channel.RELEASE))
                 sinceBuild = "242"
-                untilBuild = "243.*"
+                untilBuild = "252.*"
             }
         }
     }
@@ -103,18 +104,21 @@ intellijPlatform {
 
 dependencies {
     intellijPlatform {
-        intellijIdeaCommunity("2024.2.3")
+        intellijIdeaCommunity("2025.1")
         testFramework(TestFrameworkType.Platform)
         testFramework(TestFrameworkType.Starter, configurationName = "uiTestImplementation")
         pluginVerifier()
     }
-    implementation("com.typesafe:config:1.4.2")
+    implementation("com.typesafe:config:1.4.3")
+    implementation("org.jetbrains.kotlinx:kotlinx-datetime:0.6.0")
 
 
     testImplementation("junit:junit:4.13.2")
     testImplementation("org.hamcrest:hamcrest:3.0")
-    testImplementation("org.opentest4j:opentest4j:1.2.0")
-    testImplementation("io.mockk:mockk:1.12.7") {
+    testImplementation("org.opentest4j:opentest4j:1.3.0")
+    testImplementation("io.mockk:mockk:1.14.0") {
         exclude(group = "org.jetbrains.kotlin")
     }
+
+    uiTestImplementation("org.jetbrains.kotlinx:kotlinx-datetime:0.6.0")
 }
