@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="YaTool.Application.Settings">
-    <option name="autoDownloadYaTool" value="true" />
+    <option name="yaToolPath" value="$ARCADIA_ROOT$/ya" />
+    <option name="autoDownloadYaTool" value="$USE_ARTIFACTORY$" />
   </component>
 </project>

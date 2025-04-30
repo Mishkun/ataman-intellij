@@ -12,9 +12,9 @@ on:
           - patch
           - minor
           - major
-      release_notes:
-        description: 'Release Notes'
-        required: true
+      additional_notes:
+        description: 'Additional Release Notes (optional)'
+        required: false
         type: string
 
 jobs:
@@ -22,6 +22,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Fetch all history for tags and commits
       
       - name: Set up JDK 21
         uses: actions/setup-java@v4
@@ -62,13 +64,42 @@ jobs:
         run: |
           sed -i "s/version = \"${{ steps.get_current_version.outputs.CURRENT_VERSION }}\"/version = \"${{ steps.calculate_version.outputs.NEW_VERSION }}\"/" build.gradle.kts
 
-      - name: Create changelog file
+      - name: Generate changelog from commits
+        id: generate_changelog
         run: |
-          echo "${{ github.event.inputs.release_notes }}" > changelog.txt
+          # Find the latest tag
+          LATEST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "")
+          
+          if [ -z "$LATEST_TAG" ]; then
+            # If no tags exist, use all commits
+            echo "No previous tags found. Using all commits for changelog."
+            CHANGELOG=$(git log --pretty=format:"- %s" --no-merges)
+          else
+            echo "Found latest tag: $LATEST_TAG"
+            # Get commits since the latest tag
+            CHANGELOG=$(git log ${LATEST_TAG}..HEAD --pretty=format:"- %s" --no-merges)
+          fi
+          
+          # Add additional notes if provided
+          ADDITIONAL_NOTES="${{ github.event.inputs.additional_notes }}"
+          if [ ! -z "$ADDITIONAL_NOTES" ]; then
+            CHANGELOG="${ADDITIONAL_NOTES}
+          
+            ${CHANGELOG}"
+          fi
+          
+          # Save changelog to file for build
+          echo "$CHANGELOG" > changelog.txt
+          
+          # Save changelog for GitHub release body
+          CHANGELOG="${CHANGELOG//'%'/'%25'}"
+          CHANGELOG="${CHANGELOG//$'\n'/'%0A'}"
+          CHANGELOG="${CHANGELOG//$'\r'/'%0D'}"
+          echo "CHANGELOG=${CHANGELOG}" >> $GITHUB_OUTPUT
       
       - name: Build plugin
         run: ./gradlew buildPlugin
-
+      
       - name: Commit version bump and changelog
         run: |
           git config --local user.email "action@github.com"
@@ -83,8 +114,8 @@ jobs:
         with:
           tag_name: v${{ steps.calculate_version.outputs.NEW_VERSION }}
           name: Release v${{ steps.calculate_version.outputs.NEW_VERSION }}
-          body: ${{ github.event.inputs.release_notes }}
-          files: build/libs/*.jar
+          body: ${{ steps.generate_changelog.outputs.CHANGELOG }}
+          files: build/distributions/*.jar
           draft: false
           prerelease: false
         env:

@@ -9,6 +9,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 2  # Need at least 2 commits to get the commit message
+      
       - name: Set up JDK 21
         uses: actions/setup-java@v4
         with:
@@ -23,9 +26,17 @@ jobs:
         id: get_version
         run: echo "VERSION=$(grep 'version =' build.gradle.kts | head -n 1 | cut -d '"' -f 2)-SNAPSHOT" >> $GITHUB_OUTPUT
 
-      - name: Get commit hash
+      - name: Get commit details
         id: get_commit
-        run: echo "COMMIT=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
+        run: |
+          COMMIT_HASH=$(git rev-parse --short HEAD)
+          COMMIT_MESSAGE=$(git log -1 --pretty=%B)
+          echo "COMMIT=${COMMIT_HASH}" >> $GITHUB_OUTPUT
+          # Escape newlines and special characters for GitHub Actions
+          COMMIT_MESSAGE="${COMMIT_MESSAGE//'%'/'%25'}"
+          COMMIT_MESSAGE="${COMMIT_MESSAGE//$'\n'/'%0A'}"
+          COMMIT_MESSAGE="${COMMIT_MESSAGE//$'\r'/'%0D'}"
+          echo "COMMIT_MESSAGE=${COMMIT_MESSAGE}" >> $GITHUB_OUTPUT
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
@@ -35,8 +46,11 @@ jobs:
           body: |
             Automated snapshot build from commit ${{ steps.get_commit.outputs.COMMIT }}
             
+            **Commit Message:**
+            ${{ steps.get_commit.outputs.COMMIT_MESSAGE }}
+            
             This is an automated snapshot release created from the latest commit to the master branch.
-          files: build/libs/*.jar
+          files: build/distributions/*.jar
           prerelease: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
