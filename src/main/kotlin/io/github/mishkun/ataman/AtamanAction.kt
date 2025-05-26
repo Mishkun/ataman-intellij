@@ -8,6 +8,7 @@ import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.actionSystem.ex.ActionUtil
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
@@ -24,17 +25,26 @@ import java.awt.Font
 import java.awt.GridBagLayout
 import java.awt.KeyboardFocusManager
 import java.awt.event.ActionEvent
-import java.awt.event.KeyEvent
+import java.util.Timer
+import java.util.TimerTask
 import javax.swing.AbstractAction
 import javax.swing.JComponent
 import javax.swing.JLabel
 import javax.swing.JList
 import javax.swing.JPanel
 import javax.swing.ListCellRenderer
+import javax.swing.SwingUtilities
 import javax.swing.text.JTextComponent
 
+/**
+ * A specialized version of LeaderAction that checks if the current focus owner
+ * is appropriate for triggering the action. For example, it will not trigger
+ * when a text field is focused or when speed search is active.
+ *
+ * This action is useful for IdeaVim users who want to use a leader key without
+ * modifiers, like Space, but don't want it to interfere with normal text entry.
+ */
 class TransparentLeaderAction : DumbAwareAction() {
-
     private val delegateAction = LeaderAction()
 
     override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
@@ -51,6 +61,7 @@ class TransparentLeaderAction : DumbAwareAction() {
     }
 
     override fun actionPerformed(e: AnActionEvent) {
+        // Simply delegate to the LeaderAction which now handles key event buffering
         delegateAction.actionPerformed(e)
     }
 
@@ -71,24 +82,57 @@ class TransparentLeaderAction : DumbAwareAction() {
 }
 
 class LeaderAction : DumbAwareAction() {
-
     override fun actionPerformed(event: AnActionEvent) {
-        LeaderPopup(
-            event.project, LeaderListStep(
-                "Ataman",
-                event.dataContext,
-                values = service<ConfigService>().parsedBindings
-            )
-        ).run {
-            val project = event.project
-            if (project != null) {
-                showCenteredInCurrentWindow(project)
-            } else {
-                showInFocusCenter()
-            }
+        // Start capturing key events immediately with the aggressive strategy
+        val keyEventBuffer = service<KeyEventBuffer>()
+        keyEventBuffer.clearCapturedEvents()
+        keyEventBuffer.startCapturing()
+
+        // Use a timer to ensure key event blocking has time to fully initialize
+        // before showing the popup (gives time for our aggressive event blocking to take effect)
+        val timer = Timer()
+
+        try {
+            timer.schedule(object : TimerTask() {
+                override fun run() {
+                    SwingUtilities.invokeLater {
+                        try {
+                            // Create and show the popup with our key event buffer
+                            LeaderPopup(
+                                event.project,
+                                LeaderListStep(
+                                    "Ataman",
+                                    event.dataContext,
+                                    values = service<ConfigService>().parsedBindings
+                                ),
+                                keyEventBuffer = keyEventBuffer
+                            ).run {
+                                val project = event.project
+                                if (project != null) {
+                                    showCenteredInCurrentWindow(project)
+                                } else {
+                                    showInFocusCenter()
+                                }
+
+                                // Process any captured events after the popup is fully initialized
+                                ApplicationManager.getApplication().invokeLater {
+                                    processBufferedEvents()
+                                }
+                            }
+                        } catch (e: Exception) {
+                            keyEventBuffer.stopCapturing()
+                        }
+                    }
+                }
+            }, 50) // Short delay to ensure event blocking is fully initialized
+
+        } catch (e: Exception) {
+            // Make sure to stop capturing events if something goes wrong
+            keyEventBuffer.stopCapturing()
+            timer.cancel()
+            throw e
         }
     }
-
 }
 
 class LeaderListStep(title: String? = null, val dataContext: DataContext, values: List<LeaderBinding>) :
@@ -107,6 +151,7 @@ class LeaderListStep(title: String? = null, val dataContext: DataContext, values
                     }
                 }
             }
+
             is LeaderBinding.GroupBinding -> LeaderListStep(null, dataContext, selectedValue.bindings)
             null -> null
         }
@@ -129,22 +174,72 @@ class LeaderPopup(
     project: Project? = null,
     step: LeaderListStep,
     parent: WizardPopup? = null,
-    parentObject: Any? = null
+    parentObject: Any? = null,
+    private val keyEventBuffer: KeyEventBuffer? = null
 ) : ListPopupImpl(project, parent, step, parentObject) {
 
+    private val keyActionManager = service<KeyActionManager>()
+
     init {
+        // Use pre-registered actions from KeyActionManager with popup-specific behavior
         step.values.forEach { binding ->
-            registerAction("handle${binding.key}", binding.key, object : AbstractAction() {
-                override fun actionPerformed(e: ActionEvent?) {
-                    list.setSelectedValue(binding, true)
-                    handleSelect(true)
+            // Get the pre-created action template from KeyActionManager
+            val actionTemplate = keyActionManager.getActionForBinding(binding.key)
+
+            // If template exists, register it with popup-specific behavior
+            if (actionTemplate != null) {
+                // Create a popup-specific action that uses the current context
+                val popupAction = object : AbstractAction() {
+                    override fun actionPerformed(e: ActionEvent?) {
+                        list.setSelectedValue(binding, true)
+                        handleSelect(true)
+                    }
                 }
-            })
+
+                // Register the action with this popup
+                registerAction("handle${binding.key}", binding.key, popupAction)
+            } else {
+                // Fallback to creating a new action if not found in KeyActionManager
+                registerAction("handle${binding.key}", binding.key, object : AbstractAction() {
+                    override fun actionPerformed(e: ActionEvent?) {
+                        list.setSelectedValue(binding, true)
+                        handleSelect(true)
+                    }
+                })
+            }
         }
     }
 
-    override fun process(aEvent: KeyEvent) {
-        aEvent.consume()
+    /**
+     * Process any key events that were captured during popup initialization
+     */
+    fun processBufferedEvents() {
+        if (keyEventBuffer == null) return
+
+        // Get captured events but DON'T stop capturing yet
+        // We'll keep blocking all keyboard input until the popup is interacted with
+        val capturedEvents = keyEventBuffer.drainCapturedEvents()
+
+        if (capturedEvents.isNotEmpty()) {
+            // Process each captured key event
+            for (keyStroke in capturedEvents) {
+                // Find a binding that matches this key stroke
+                val matchingBinding = (step as LeaderListStep).values.find {
+                    it.key.keyCode == keyStroke.keyCode &&
+                            it.key.modifiers == keyStroke.modifiers
+                }
+
+                if (matchingBinding != null) {
+                    list.setSelectedValue(matchingBinding, true)
+                    handleSelect(true)
+                    break // Process only the first valid key
+                }
+            }
+        }
+
+        // Note: We do not stop capturing events here
+        // Key event capturing will continue until the popup is disposed
+        // This ensures no stray key events can trigger other actions
     }
 
     override fun getListElementRenderer(): ListCellRenderer<*> = ActionItemRenderer()
@@ -153,8 +248,15 @@ class LeaderPopup(
         parent?.project,
         step as LeaderListStep,
         parent,
-        parentValue
+        parentValue,
+        keyEventBuffer
     )
+
+    override fun dispose() {
+        // Make sure to stop capturing events when the popup is disposed
+        keyEventBuffer?.stopCapturing()
+        super.dispose()
+    }
 }
 
 
