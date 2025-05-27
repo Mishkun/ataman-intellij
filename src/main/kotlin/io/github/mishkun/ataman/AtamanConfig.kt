@@ -31,8 +31,11 @@ val RC_TEMPLATE = """
 fun updateConfig(project: Project, configDir: File, ideProductKey: String) {
     parseConfig(configDir, ideProductKey).fold(
         onSuccess = { values ->
-        service<ConfigService>().parsedBindings = values
-    },
+            // Make sure KeyActionManager is initialized before setting the bindings
+            service<KeyActionManager>()
+            // Setting bindings will trigger action preparation in ConfigService
+            service<ConfigService>().parsedBindings = values
+        },
         onFailure = { error ->
             when (error) {
                 is IllegalStateException -> project.showNotification(
