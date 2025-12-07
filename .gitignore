@@ -167,3 +167,14 @@ Temporary Items
 /.idea/modules.xml
 /allure-results/
 /.intellijPlatform/
+
+# Claude Code
+.claude/
+
+# Auto-generated module files
+.idea/modules/
+.idea/*.iml
+*.iml
+
+# Scratchpad
+scratchpad.txt
