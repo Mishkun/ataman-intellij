@@ -1,0 +1,60 @@
+
+  Goal: Fix key events lost during popup initialization
+
+  Problem Statement:
+  When the user triggers the leader action and types keys quickly, those
+  keystrokes are lost because the popup UI hasn't finished rendering yet. The
+  Swing event dispatch thread is busy creating the popup, so key events either go
+   to the wrong component or are discarded.
+
+  Secondary Goal: Enable arrow key navigation in the popup (issue #20).
+
+  ---
+  Implementation Plan
+
+  1. Buffer key events during popup initialization
+
+  - Create a service that intercepts key events starting from the moment
+  LeaderAction is invoked
+  - Store intercepted events in a queue
+  - Once the popup is visible and ready, replay the buffered events against the
+  popup's bindings
+
+  2. Pre-compute key action mappings when config loads
+
+  - When bindings are parsed from .atamanrc.config, build a lookup map from
+  KeyStroke → LeaderBinding
+  - This avoids doing map construction during the time-critical popup
+  initialization phase
+
+  3. Process buffered events after popup is shown
+
+  - After the popup is displayed, drain the event buffer
+  - Match each buffered keystroke against the current level's bindings
+  - If a match is found, select that binding and handle it (either execute action
+   or navigate to submenu)
+
+  ---
+  Key Design Decisions
+
+  Event interception approach:
+  - Use KeyEventDispatcher registered on KeyboardFocusManager - this is the
+  standard Swing mechanism for global key event interception
+  - Consume matching events to prevent them from reaching other components
+  - Copy KeyEvent objects before queuing (events can be reused by AWT)
+
+  Lifecycle:
+  1. startCapturing() - called immediately when LeaderAction.actionPerformed()
+  begins
+  2. drainCapturedEvents() - called after popup is visible via invokeLater
+  3. stopCapturing() - called when popup is disposed
+
+  What to capture:
+  - KEY_PRESSED events for navigation keys (arrows, escape)
+  - KEY_TYPED events for character input
+  - Skip modifier-only events (Shift, Ctrl, Alt, Meta pressed alone)
+
+  ---
+  This is a reasonable approach to the problem. The complexity in the PR comes
+  from trying to handle edge cases where events might slip through, but a simpler
+   single-layer interception should work for most scenarios.

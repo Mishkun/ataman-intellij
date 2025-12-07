@@ -5,7 +5,7 @@
     <groovy codeStyle="LEGACY" />
   </component>
   <component name="ExternalStorageConfigurationManager" enabled="$USE_ARTIFACTORY$" />
-  <component name="ProjectRootManager" version="2" languageLevel="JDK_21" default="$USE_ARTIFACTORY$" project-jdk-name="IDE SDK" project-jdk-type="JavaSDK" />
+  <component name="ProjectRootManager" version="2" languageLevel="JDK_21" project-jdk-name="JAVA_HOME" project-jdk-type="JavaSDK" />
   <component name="SuppressKotlinCodeStyleNotification">
     <option name="disableForAll" value="$USE_ARTIFACTORY$" />
   </component>

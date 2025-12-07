@@ -15,7 +15,7 @@ IdeaVim productivity or just to have a more convenient way to access actions, as
 
 ## Rationale
 
-IntelliJ IDEA is notorious for its tricky keybindings involving multiple modifiers and F1-F12 keys. Another approach of
+[//]: # (IntelliJ IDEA is notorious for its tricky keybindings involving multiple modifiers and F1-F12 keys. Another approach of)
 using `Cmd+Shift+A` command pallete and search for most of the actions, reducing the speed.
 
 There is another way, popularized by Spacemacs and Doom Emacs – leader (or sticky) keys. It works fairly simple – you

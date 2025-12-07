@@ -6,17 +6,16 @@ import org.junit.Test
 import java.awt.event.KeyEvent
 import javax.swing.KeyStroke
 
-class ConfigServiceTest {
+class LeaderBindingExtensionsTest {
 
     @Test
-    fun `bindingsMap is empty when parsedBindings is empty`() {
-        val service = ConfigService()
-        assertTrue(service.bindingsMap.isEmpty())
+    fun `toKeyStrokeMap returns empty map for empty list`() {
+        val bindings = emptyList<LeaderBinding>()
+        assertTrue(bindings.toKeyStrokeMap().isEmpty())
     }
 
     @Test
-    fun `bindingsMap is built when parsedBindings is set`() {
-        val service = ConfigService()
+    fun `toKeyStrokeMap creates map keyed by keystroke`() {
         val keyStrokeA = KeyStroke.getKeyStroke(KeyEvent.VK_A, 0, true)
         val keyStrokeB = KeyStroke.getKeyStroke(KeyEvent.VK_B, 0, true)
 
@@ -25,37 +24,15 @@ class ConfigServiceTest {
             LeaderBinding.SingleBinding(keyStrokeB, "b", "Action B", "ActionB")
         )
 
-        service.parsedBindings = bindings
+        val map = bindings.toKeyStrokeMap()
 
-        assertEquals(2, service.bindingsMap.size)
-        assertEquals(bindings[0], service.bindingsMap[keyStrokeA])
-        assertEquals(bindings[1], service.bindingsMap[keyStrokeB])
+        assertEquals(2, map.size)
+        assertEquals(bindings[0], map[keyStrokeA])
+        assertEquals(bindings[1], map[keyStrokeB])
     }
 
     @Test
-    fun `bindingsMap is updated when parsedBindings changes`() {
-        val service = ConfigService()
-        val keyStrokeA = KeyStroke.getKeyStroke(KeyEvent.VK_A, 0, true)
-        val keyStrokeC = KeyStroke.getKeyStroke(KeyEvent.VK_C, 0, true)
-
-        val initialBindings = listOf(
-            LeaderBinding.SingleBinding(keyStrokeA, "a", "Action A", "ActionA")
-        )
-        service.parsedBindings = initialBindings
-
-        val newBindings = listOf(
-            LeaderBinding.SingleBinding(keyStrokeC, "c", "Action C", "ActionC")
-        )
-        service.parsedBindings = newBindings
-
-        assertEquals(1, service.bindingsMap.size)
-        assertTrue(service.bindingsMap.containsKey(keyStrokeC))
-        assertTrue(!service.bindingsMap.containsKey(keyStrokeA))
-    }
-
-    @Test
-    fun `buildBindingsMap creates correct map for group bindings`() {
-        val service = ConfigService()
+    fun `toKeyStrokeMap works with group bindings`() {
         val keyStrokeG = KeyStroke.getKeyStroke(KeyEvent.VK_G, 0, false)
         val keyStrokeA = KeyStroke.getKeyStroke(KeyEvent.VK_A, 0, true)
 
@@ -64,15 +41,14 @@ class ConfigServiceTest {
         )
         val groupBinding = LeaderBinding.GroupBinding(keyStrokeG, "g", "Group", nestedBindings)
 
-        val map = service.buildBindingsMap(listOf(groupBinding))
+        val map = listOf(groupBinding).toKeyStrokeMap()
 
         assertEquals(1, map.size)
         assertEquals(groupBinding, map[keyStrokeG])
     }
 
     @Test
-    fun `buildBindingsMap can build map for nested bindings`() {
-        val service = ConfigService()
+    fun `toKeyStrokeMap works for nested bindings list`() {
         val keyStrokeA = KeyStroke.getKeyStroke(KeyEvent.VK_A, 0, true)
         val keyStrokeB = KeyStroke.getKeyStroke(KeyEvent.VK_B, 0, true)
 
@@ -81,7 +57,7 @@ class ConfigServiceTest {
             LeaderBinding.SingleBinding(keyStrokeB, "b", "Action B", "ActionB")
         )
 
-        val nestedMap = service.buildBindingsMap(nestedBindings)
+        val nestedMap = nestedBindings.toKeyStrokeMap()
 
         assertEquals(2, nestedMap.size)
         assertEquals(nestedBindings[0], nestedMap[keyStrokeA])

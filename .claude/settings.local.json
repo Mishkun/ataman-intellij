@@ -1,0 +1,21 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(./gradlew runPluginVerifier:*)",
+      "Bash(./gradlew tasks:*)",
+      "Bash(./gradlew verifyPlugin:*)",
+      "Bash(gh pr:*)",
+      "Bash(./gradlew buildPlugin:*)",
+      "Bash(tree:*)",
+      "Bash(xargs:*)",
+      "Bash(./gradlew test:*)",
+      "Bash(git checkout:*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(git push:*)",
+      "WebSearch"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}

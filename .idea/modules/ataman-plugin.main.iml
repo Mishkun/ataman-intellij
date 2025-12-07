@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<module external.linked.project.id="ataman-plugin:main" external.linked.project.path="$MODULE_DIR$/../.." external.root.project.path="$MODULE_DIR$/../.." external.system.id="GRADLE" external.system.module.group="io.github.mishkun" external.system.module.type="sourceSet" external.system.module.version="1.5.0" type="JAVA_MODULE" version="4">
+  <component name="FacetManager">
+    <facet external-system-id="GRADLE" type="kotlin-language" name="Kotlin">
+      <configuration version="5" platform="JVM 21" allPlatforms="JVM [21]" useProjectSettings="false" pureKotlinSourceFolders="$MODULE_DIR$/../../src/test/kotlin;/Users/themishkun/projects/kotlin/ataman-intellij/src/main/kotlin;/Users/themishkun/projects/kotlin/ataman-intellij/src/uiTest/kotlin">
+        <compilerSettings />
+        <compilerArguments>
+          <flagArguments>
+            <flagArg name="allowNoSourceFiles" arg="true" />
+            <flagArg name="noReflect" arg="true" />
+            <flagArg name="noStdlib" arg="true" />
+          </flagArguments>
+          <stringArguments>
+            <stringArg name="destination" arg="$MODULE_DIR$/../../build/classes/kotlin/main" />
+            <stringArg name="jvmTarget" arg="21" />
+            <stringArg name="moduleName" arg="ataman-plugin" />
+            <stringArg name="apiVersion" arg="1.9" />
+            <stringArg name="languageVersion" arg="2.0" />
+          </stringArguments>
+          <arrayArguments>
+            <arrayArg name="pluginClasspaths">
+              <args>
+                <arg>$USER_HOME$/.gradle/caches/modules-2/files-2.1/org.jetbrains.kotlin/kotlin-scripting-jvm/2.0.20/46b8d2d2028448f6596cc3ce0ad7b10b259ec236/kotlin-scripting-jvm-2.0.20.jar</arg>
+                <arg>$USER_HOME$/.gradle/caches/modules-2/files-2.1/org.jetbrains.kotlin/kotlin-scripting-common/2.0.20/af6097b8ac359457ec1cf9b34bd9b5313b52eb6/kotlin-scripting-common-2.0.20.jar</arg>
+                <arg>$USER_HOME$/.gradle/caches/modules-2/files-2.1/org.jetbrains.kotlin/kotlin-stdlib/2.0.20/7388d355f7cceb002cd387ccb7ab3850e4e0a07f/kotlin-stdlib-2.0.20.jar</arg>
+                <arg>$USER_HOME$/.gradle/caches/modules-2/files-2.1/org.jetbrains/annotations/13.0/919f0dfe192fb4e063e7dacadee7f8bb9a2672a9/annotations-13.0.jar</arg>
+                <arg>$USER_HOME$/.gradle/caches/modules-2/files-2.1/org.jetbrains.kotlin/kotlin-script-runtime/2.0.20/4aea042b39014e0a924c2e1d4a21b6fff7e4d35/kotlin-script-runtime-2.0.20.jar</arg>
+              </args>
+            </arrayArg>
+            <arrayArg name="pluginOptions" />
+          </arrayArguments>
+        </compilerArguments>
+      </configuration>
+    </facet>
+  </component>
+  <component name="NewModuleRootManager">
+    <output url="file://$MODULE_DIR$/../../build/classes/java/main" />
+    <exclude-output />
+    <content url="file://$MODULE_DIR$/../../src/main">
+      <sourceFolder url="file://$MODULE_DIR$/../../src/main/kotlin" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/../../src/main/resources" type="java-resource" />
+    </content>
+    <orderEntry type="jdk" jdkName="homebrew-21" jdkType="JavaSDK" />
+    <orderEntry type="sourceFolder" forTests="false" />
+    <orderEntry type="library" name="Gradle: com.typesafe:config:1.4.3" level="project" />
+    <orderEntry type="module-library" scope="PROVIDED">
+      <library name="Gradle: idea:ideaIC:aarch64:2025.1">
+        <CLASSES>
+          <root url="jar://$APPLICATION_HOME_DIR$/lib/annotations.jar!/" />
+          <root url="jar://$APPLICATION_HOME_DIR$/lib/app.jar!/" />
+          <root url="jar://$APPLICATION_HOME_DIR$/lib/app-client.jar!/" />
+          <root url="jar://$APPLICATION_HOME_DIR$/lib/bouncy-castle.jar!/" />
+          <root url="jar://$APPLICATION_HOME_DIR$/lib/external-system-rt.jar!/" />
+          <root url="jar://$APPLICATION_HOME_DIR$/lib/externalProcess-rt.jar!/" />
+          <root url="jar://$APPLICATION_HOME_DIR$/lib/forms_rt.jar!/" />
+          <root url="jar://$APPLICATION_HOME_DIR$/lib/groovy.jar!/" />
+          <root url="jar://$APPLICATION_HOME_DIR$/lib/idea_rt.jar!/" />
+          <root url="jar://$APPLICATION_HOME_DIR$/lib/intellij-test-discovery.jar!/" />
+          <root url="jar://$APPLICATION_HOME_DIR$/lib/jps-model.jar!/" />
+          <root url="jar://$APPLICATION_HOME_DIR$/lib/jsch-agent.jar!/" />
+          <root url="jar://$APPLICATION_HOME_DIR$/lib/kotlinx-coroutines-slf4j-1.8.0-intellij.jar!/" />
+          <root url="jar://$APPLICATION_HOME_DIR$/lib/lib.jar!/" />
+          <root url="jar://$APPLICATION_HOME_DIR$/lib/lib-client.jar!/" />
+          <root url="jar://$APPLICATION_HOME_DIR$/plugins/marketplace/lib/boot/marketplace-impl.jar!/" />
+          <root url="jar://$APPLICATION_HOME_DIR$/lib/nio-fs.jar!/" />
+          <root url="jar://$APPLICATION_HOME_DIR$/lib/opentelemetry.jar!/" />
+          <root url="jar://$APPLICATION_HOME_DIR$/lib/platform-loader.jar!/" />
+          <root url="jar://$APPLICATION_HOME_DIR$/lib/protobuf.jar!/" />
+          <root url="jar://$APPLICATION_HOME_DIR$/lib/rd.jar!/" />
+          <root url="jar://$APPLICATION_HOME_DIR$/lib/stats.jar!/" />
+          <root url="jar://$APPLICATION_HOME_DIR$/lib/trove.jar!/" />
+          <root url="jar://$APPLICATION_HOME_DIR$/lib/util.jar!/" />
+          <root url="jar://$APPLICATION_HOME_DIR$/lib/util-8.jar!/" />
+          <root url="jar://$APPLICATION_HOME_DIR$/lib/util_rt.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES />
+      </library>
+    </orderEntry>
+    <orderEntry type="library" name="Gradle: org.jetbrains.kotlinx:kotlinx-datetime-jvm:0.6.0" level="project" />
+    <orderEntry type="library" name="Gradle: org.jetbrains.kotlin:kotlin-stdlib:1.9.21" level="project" />
+    <orderEntry type="library" name="Gradle: org.jetbrains:annotations:13.0" level="project" />
+  </component>
+</module>

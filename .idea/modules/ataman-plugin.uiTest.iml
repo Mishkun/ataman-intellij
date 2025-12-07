@@ -1,0 +1,228 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<module external.linked.project.id="ataman-plugin:uiTest" external.linked.project.path="$MODULE_DIR$/../.." external.root.project.path="$MODULE_DIR$/../.." external.system.id="GRADLE" external.system.module.group="io.github.mishkun" external.system.module.type="sourceSet" external.system.module.version="1.5.0" type="JAVA_MODULE" version="4">
+  <component name="FacetManager">
+    <facet external-system-id="GRADLE" type="kotlin-language" name="Kotlin">
+      <configuration version="5" platform="JVM 21" allPlatforms="JVM [21]" useProjectSettings="false" pureKotlinSourceFolders="$MODULE_DIR$/../../src/test/kotlin;/Users/themishkun/projects/kotlin/ataman-intellij/src/main/kotlin;/Users/themishkun/projects/kotlin/ataman-intellij/src/uiTest/kotlin">
+        <compilerSettings />
+        <compilerArguments>
+          <flagArguments>
+            <flagArg name="allowNoSourceFiles" arg="true" />
+            <flagArg name="noReflect" arg="true" />
+            <flagArg name="noStdlib" arg="true" />
+          </flagArguments>
+          <stringArguments>
+            <stringArg name="destination" arg="$MODULE_DIR$/../../build/classes/kotlin/uiTest" />
+            <stringArg name="jvmTarget" arg="21" />
+            <stringArg name="moduleName" arg="ataman-plugin_uiTest" />
+            <stringArg name="apiVersion" arg="1.9" />
+            <stringArg name="languageVersion" arg="2.0" />
+          </stringArguments>
+          <arrayArguments>
+            <arrayArg name="pluginClasspaths">
+              <args>
+                <arg>$USER_HOME$/.gradle/caches/modules-2/files-2.1/org.jetbrains.kotlin/kotlin-scripting-jvm/2.0.20/46b8d2d2028448f6596cc3ce0ad7b10b259ec236/kotlin-scripting-jvm-2.0.20.jar</arg>
+                <arg>$USER_HOME$/.gradle/caches/modules-2/files-2.1/org.jetbrains.kotlin/kotlin-scripting-common/2.0.20/af6097b8ac359457ec1cf9b34bd9b5313b52eb6/kotlin-scripting-common-2.0.20.jar</arg>
+                <arg>$USER_HOME$/.gradle/caches/modules-2/files-2.1/org.jetbrains.kotlin/kotlin-stdlib/2.0.20/7388d355f7cceb002cd387ccb7ab3850e4e0a07f/kotlin-stdlib-2.0.20.jar</arg>
+                <arg>$USER_HOME$/.gradle/caches/modules-2/files-2.1/org.jetbrains/annotations/13.0/919f0dfe192fb4e063e7dacadee7f8bb9a2672a9/annotations-13.0.jar</arg>
+                <arg>$USER_HOME$/.gradle/caches/modules-2/files-2.1/org.jetbrains.kotlin/kotlin-script-runtime/2.0.20/4aea042b39014e0a924c2e1d4a21b6fff7e4d35/kotlin-script-runtime-2.0.20.jar</arg>
+              </args>
+            </arrayArg>
+            <arrayArg name="pluginOptions" />
+          </arrayArguments>
+        </compilerArguments>
+      </configuration>
+    </facet>
+  </component>
+  <component name="NewModuleRootManager">
+    <output url="file://$MODULE_DIR$/../../build/classes/java/uiTest" />
+    <exclude-output />
+    <content url="file://$MODULE_DIR$/../../src/uiTest">
+      <sourceFolder url="file://$MODULE_DIR$/../../src/uiTest/kotlin" isTestSource="false" />
+    </content>
+    <orderEntry type="jdk" jdkName="homebrew-21" jdkType="JavaSDK" />
+    <orderEntry type="sourceFolder" forTests="false" />
+    <orderEntry type="library" name="Gradle: com.typesafe:config:1.4.3" level="project" />
+    <orderEntry type="library" name="Gradle: idea:ideaIC:dmg:aarch64:2025.1" level="project" />
+    <orderEntry type="library" name="Gradle: com.jetbrains.intellij.platform:test-framework:251.23774.435" level="project" />
+    <orderEntry type="library" name="Gradle: junit:junit:4.13.2" level="project" />
+    <orderEntry type="library" name="Gradle: org.hamcrest:hamcrest:3.0" level="project" />
+    <orderEntry type="library" name="Gradle: org.opentest4j:opentest4j:1.3.0" level="project" />
+    <orderEntry type="library" name="Gradle: com.jetbrains.intellij.tools:ide-starter-squashed:251.23774.435" level="project" />
+    <orderEntry type="library" name="Gradle: com.jetbrains.intellij.tools:ide-starter-junit5:251.23774.435" level="project" />
+    <orderEntry type="library" name="Gradle: com.jetbrains.intellij.tools:ide-starter-driver:251.23774.435" level="project" />
+    <orderEntry type="library" name="Gradle: com.jetbrains.intellij.driver:driver-client:251.23774.435" level="project" />
+    <orderEntry type="library" name="Gradle: com.jetbrains.intellij.driver:driver-sdk:251.23774.435" level="project" />
+    <orderEntry type="library" name="Gradle: com.jetbrains.intellij.driver:driver-model:251.23774.435" level="project" />
+    <orderEntry type="library" scope="PROVIDED" name="Gradle: org.jetbrains.kotlinx:kotlinx-datetime-jvm:0.6.0" level="project" />
+    <orderEntry type="library" name="Gradle: com.jetbrains.intellij.platform:test-framework-core:251.23774.435" level="project" />
+    <orderEntry type="library" name="Gradle: com.jetbrains.intellij.platform:test-framework-common:251.23774.435" level="project" />
+    <orderEntry type="library" name="Gradle: org.hamcrest:hamcrest-core:1.3" level="project" />
+    <orderEntry type="library" name="Gradle: io.mockk:mockk-jvm:1.14.0" level="project" />
+    <orderEntry type="library" name="Gradle: org.jetbrains:annotations:24.0.0" level="project" />
+    <orderEntry type="library" name="Gradle: org.slf4j:slf4j-api:2.0.13" level="project" />
+    <orderEntry type="library" name="Gradle: org.jetbrains.intellij.deps.jcef:jcef:122.1.9-gd14e051-chromium-122.0.6261.94-api-1.18-251-b27" level="project" />
+    <orderEntry type="library" name="Gradle: org.jetbrains.kotlinx:kotlinx-collections-immutable-jvm:0.3.8" level="project" />
+    <orderEntry type="library" name="Gradle: com.jetbrains.mlapi:ml-api:76" level="project" />
+    <orderEntry type="library" name="Gradle: com.jetbrains.rd:rd-framework:2025.1.1" level="project" />
+    <orderEntry type="library" name="Gradle: com.jetbrains.rd:rd-swing:2025.1.1" level="project" />
+    <orderEntry type="library" name="Gradle: org.jetbrains.kotlin:kotlin-stdlib:1.9.21" level="project" />
+    <orderEntry type="library" name="Gradle: io.mockk:mockk-dsl-jvm:1.14.0" level="project" />
+    <orderEntry type="library" name="Gradle: io.mockk:mockk-agent-jvm:1.14.0" level="project" />
+    <orderEntry type="library" name="Gradle: io.mockk:mockk-agent-api-jvm:1.14.0" level="project" />
+    <orderEntry type="library" name="Gradle: io.mockk:mockk-core-jvm:1.14.0" level="project" />
+    <orderEntry type="library" name="Gradle: org.objenesis:objenesis:3.3" level="project" />
+    <orderEntry type="library" scope="PROVIDED" name="Gradle: net.bytebuddy:byte-buddy:1.14.17" level="project" />
+    <orderEntry type="library" name="Gradle: net.bytebuddy:byte-buddy-agent:1.14.17" level="project" />
+    <orderEntry type="module" module-name="ataman-plugin.main" />
+    <orderEntry type="library" scope="RUNTIME" name="Gradle: org.jetbrains.kotlinx:kotlinx-datetime-jvm:0.6.2" level="project" />
+    <orderEntry type="library" scope="RUNTIME" name="Gradle: com.jetbrains.intellij.tools:tests-bootstrap:251.23774.435" level="project" />
+    <orderEntry type="library" scope="RUNTIME" name="Gradle: org.assertj:assertj-core:3.26.3" level="project" />
+    <orderEntry type="library" scope="RUNTIME" name="Gradle: org.junit.jupiter:junit-jupiter-api:5.11.3" level="project" />
+    <orderEntry type="library" scope="RUNTIME" name="Gradle: com.jetbrains.intellij.tools:ide-starter:251.23774.435" level="project" />
+    <orderEntry type="library" scope="RUNTIME" name="Gradle: com.jetbrains.intellij.tools:ide-performance-testing-commands:251.23774.435" level="project" />
+    <orderEntry type="library" scope="RUNTIME" name="Gradle: org.kodein.di:kodein-di-jvm:7.25.0" level="project" />
+    <orderEntry type="library" scope="RUNTIME" name="Gradle: io.qameta.allure:allure-java-commons:2.25.0" level="project" />
+    <orderEntry type="library" scope="RUNTIME" name="Gradle: io.opentelemetry:opentelemetry-sdk:1.47.0" level="project" />
+    <orderEntry type="library" scope="RUNTIME" name="Gradle: com.jetbrains.intellij.tools:ide-util-common:251.23774.435" level="project" />
+    <orderEntry type="library" scope="RUNTIME" name="Gradle: org.jetbrains.kotlin:kotlin-reflect:2.1.10" level="project" />
+    <orderEntry type="library" scope="RUNTIME" name="Gradle: com.fasterxml.jackson.core:jackson-databind:2.17.2" level="project" />
+    <orderEntry type="library" scope="RUNTIME" name="Gradle: com.fasterxml.jackson.core:jackson-core:2.17.2" level="project" />
+    <orderEntry type="library" scope="RUNTIME" name="Gradle: com.fasterxml.jackson.module:jackson-module-kotlin:2.17.2" level="project" />
+    <orderEntry type="library" scope="RUNTIME" name="Gradle: org.apache.httpcomponents:httpmime:4.5.14" level="project" />
+    <orderEntry type="library" scope="RUNTIME" name="Gradle: org.jetbrains.intellij.deps:gradle-api:8.12" level="project" />
+    <orderEntry type="library" scope="RUNTIME" name="Gradle: org.rauschig:jarchivelib:1.2.0" level="project" />
+    <orderEntry type="library" scope="RUNTIME" name="Gradle: com.jetbrains.qodana:qodana-sarif:0.2.113" level="project" />
+    <orderEntry type="library" scope="RUNTIME" name="Gradle: commons-io:commons-io:2.16.1" level="project" />
+    <orderEntry type="library" scope="RUNTIME" name="Gradle: com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.17.2" level="project" />
+    <orderEntry type="library" scope="RUNTIME" name="Gradle: com.github.stephenc.monte:monte-screen-recorder:0.7.7.0" level="project" />
+    <orderEntry type="library" scope="RUNTIME" name="Gradle: com.github.oshi:oshi-core:6.6.0" level="project" />
+    <orderEntry type="library" scope="RUNTIME" name="Gradle: oro:oro:2.0.8" level="project" />
+    <orderEntry type="library" scope="RUNTIME" name="Gradle: net.java.dev.jna:jna-platform:5.14.0" level="project" />
+    <orderEntry type="library" scope="RUNTIME" name="Gradle: org.jetbrains.intellij.deps.winp:winp:1.30.1" level="project" />
+    <orderEntry type="library" scope="RUNTIME" name="Gradle: org.swinglabs:swingx-core:1.6.2-2" level="project" />
+    <orderEntry type="library" scope="RUNTIME" name="Gradle: com.miglayout:miglayout-swing:11.4" level="project" />
+    <orderEntry type="library" scope="RUNTIME" name="Gradle: org.jetbrains.intellij.deps:commons-imaging:1.0-RC-1" level="project" />
+    <orderEntry type="library" scope="RUNTIME" name="Gradle: com.google.guava:guava:33.4.0-jre" level="project" />
+    <orderEntry type="library" scope="RUNTIME" name="Gradle: com.google.code.gson:gson:2.12.1" level="project" />
+    <orderEntry type="library" scope="RUNTIME" name="Gradle: org.imgscalr:imgscalr-lib:4.2" level="project" />
+    <orderEntry type="library" scope="RUNTIME" name="Gradle: org.slf4j:slf4j-jdk14:2.0.13" level="project" />
+    <orderEntry type="library" scope="RUNTIME" name="Gradle: one.util:streamex:0.8.2" level="project" />
+    <orderEntry type="library" scope="RUNTIME" name="Gradle: io.netty:netty-codec-http2:4.2.0.RC2" level="project" />
+    <orderEntry type="library" scope="RUNTIME" name="Gradle: org.jetbrains.intellij.deps:java-compatibility:1.0.1" level="project" />
+    <orderEntry type="library" scope="RUNTIME" name="Gradle: org.jetbrains.intellij.deps:asm-all:9.6.1" level="project" />
+    <orderEntry type="library" scope="RUNTIME" name="Gradle: org.jsoup:jsoup:1.18.3" level="project" />
+    <orderEntry type="library" scope="RUNTIME" name="Gradle: org.jetbrains.intellij.deps.fastutil:intellij-deps-fastutil:8.5.14-jb1" level="project" />
+    <orderEntry type="library" scope="RUNTIME" name="Gradle: org.codehaus.groovy:groovy-jsr223:3.0.19" level="project" />
+    <orderEntry type="library" scope="RUNTIME" name="Gradle: org.codehaus.groovy:groovy-json:3.0.19" level="project" />
+    <orderEntry type="library" scope="RUNTIME" name="Gradle: org.codehaus.groovy:groovy-templates:3.0.19" level="project" />
+    <orderEntry type="library" scope="RUNTIME" name="Gradle: org.codehaus.groovy:groovy-xml:3.0.19" level="project" />
+    <orderEntry type="library" scope="RUNTIME" name="Gradle: org.jetbrains.intellij:blockmap:1.0.7" level="project" />
+    <orderEntry type="library" scope="RUNTIME" name="Gradle: io.netty:netty-buffer:4.2.0.RC2" level="project" />
+    <orderEntry type="library" scope="RUNTIME" name="Gradle: org.jetbrains:marketplace-zip-signer:0.1.24" level="project" />
+    <orderEntry type="library" scope="RUNTIME" name="Gradle: com.github.ben-manes.caffeine:caffeine:3.2.0" level="project" />
+    <orderEntry type="library" scope="RUNTIME" name="Gradle: io.github.classgraph:classgraph:4.8.179" level="project" />
+    <orderEntry type="library" scope="RUNTIME" name="Gradle: com.google.protobuf:protobuf-java:3.24.4-jb.2" level="project" />
+    <orderEntry type="library" scope="RUNTIME" name="Gradle: com.ibm.icu:icu4j:73.2" level="project" />
+    <orderEntry type="library" scope="RUNTIME" name="Gradle: com.fasterxml:aalto-xml:1.3.3" level="project" />
+    <orderEntry type="library" scope="RUNTIME" name="Gradle: com.jgoodies:jgoodies-common:1.4.0" level="project" />
+    <orderEntry type="library" scope="RUNTIME" name="Gradle: com.jgoodies:forms:1.1-preview" level="project" />
+    <orderEntry type="library" scope="RUNTIME" name="Gradle: com.jetbrains:jbr-api:1.2.0" level="project" />
+    <orderEntry type="library" scope="RUNTIME" name="Gradle: org.jetbrains.kotlinx:kotlinx-serialization-json-jvm:1.7.3" level="project" />
+    <orderEntry type="library" scope="RUNTIME" name="Gradle: org.jetbrains.kotlinx:kotlinx-serialization-core-jvm:1.7.3" level="project" />
+    <orderEntry type="library" scope="RUNTIME" name="Gradle: org.jetbrains.nativecerts:jvm-native-trusted-roots:1.0.21" level="project" />
+    <orderEntry type="library" scope="RUNTIME" name="Gradle: io.opentelemetry.semconv:opentelemetry-semconv:1.30.0-rc.1" level="project" />
+    <orderEntry type="library" scope="RUNTIME" name="Gradle: io.opentelemetry:opentelemetry-extension-kotlin:1.47.0" level="project" />
+    <orderEntry type="library" scope="RUNTIME" name="Gradle: org.hdrhistogram:HdrHistogram:2.2.2" level="project" />
+    <orderEntry type="library" scope="RUNTIME" name="Gradle: com.dynatrace.hash4j:hash4j:0.20.0" level="project" />
+    <orderEntry type="library" scope="RUNTIME" name="Gradle: org.jetbrains.pty4j:pty4j:0.13.1" level="project" />
+    <orderEntry type="library" scope="RUNTIME" name="Gradle: org.jetbrains.intellij.deps:rwmutex-idea:0.0.7" level="project" />
+    <orderEntry type="library" scope="RUNTIME" name="Gradle: org.lz4:lz4-java:1.8.0" level="project" />
+    <orderEntry type="library" scope="RUNTIME" name="Gradle: org.bouncycastle:bcpkix-jdk18on:1.80" level="project" />
+    <orderEntry type="library" scope="RUNTIME" name="Gradle: org.slf4j:log4j-over-slf4j:1.7.36" level="project" />
+    <orderEntry type="library" scope="RUNTIME" name="Gradle: org.apache.commons:commons-compress:1.26.1" level="project" />
+    <orderEntry type="library" scope="RUNTIME" name="Gradle: commons-codec:commons-codec:1.17.1" level="project" />
+    <orderEntry type="library" scope="RUNTIME" name="Gradle: jaxen:jaxen:1.2.0" level="project" />
+    <orderEntry type="library" scope="RUNTIME" name="Gradle: org.jetbrains:annotations-java5:24.0.0" level="project" />
+    <orderEntry type="library" scope="RUNTIME" name="Gradle: net.jcip:jcip-annotations:1.0" level="project" />
+    <orderEntry type="library" scope="RUNTIME" name="Gradle: com.h2database:h2-mvstore:2.3.232" level="project" />
+    <orderEntry type="library" scope="RUNTIME" name="Gradle: com.github.weisj:jsvg:1.3.0-jb.8" level="project" />
+    <orderEntry type="library" scope="RUNTIME" name="Gradle: org.jetbrains.kotlinx:kotlinx-serialization-protobuf-jvm:1.7.3" level="project" />
+    <orderEntry type="library" scope="RUNTIME" name="Gradle: com.esotericsoftware:kryo5:5.6.0" level="project" />
+    <orderEntry type="library" scope="RUNTIME" name="Gradle: dk.brics:automaton:1.12-4" level="project" />
+    <orderEntry type="library" scope="RUNTIME" name="Gradle: de.cketti.unicode:kotlin-codepoints-jvm:0.9.0" level="project" />
+    <orderEntry type="library" scope="RUNTIME" name="Gradle: com.jetbrains.fus.reporting:ap-validation:76" level="project" />
+    <orderEntry type="library" scope="RUNTIME" name="Gradle: com.amazon.ion:ion-java:1.11.9" level="project" />
+    <orderEntry type="library" scope="RUNTIME" name="Gradle: org.bidib.com.github.markusbernhardt:proxy-vole:1.1.6" level="project" />
+    <orderEntry type="library" scope="RUNTIME" name="Gradle: org.mozilla:rhino-runtime:1.7.15" level="project" />
+    <orderEntry type="library" scope="RUNTIME" name="Gradle: com.jetbrains.rd:rd-core:2025.1.1" level="project" />
+    <orderEntry type="library" scope="RUNTIME" name="Gradle: com.jetbrains.rd:rd-text:2025.1.1" level="project" />
+    <orderEntry type="library" scope="RUNTIME" name="Gradle: io.opentelemetry:opentelemetry-exporter-otlp-common:1.47.0" level="project" />
+    <orderEntry type="library" scope="RUNTIME" name="Gradle: io.ktor:ktor-client-core-jvm:3.0.3" level="project" />
+    <orderEntry type="library" scope="RUNTIME" name="Gradle: io.ktor:ktor-client-java-jvm:3.0.3" level="project" />
+    <orderEntry type="library" scope="RUNTIME" name="Gradle: org.jetbrains.kotlinx:kotlinx-serialization-cbor-jvm:1.7.3" level="project" />
+    <orderEntry type="library" scope="RUNTIME" name="Gradle: com.fasterxml.jackson.dataformat:jackson-dataformat-cbor:2.17.2" level="project" />
+    <orderEntry type="library" scope="RUNTIME" name="Gradle: org.apache.velocity:velocity-engine-core:2.3" level="project" />
+    <orderEntry type="library" scope="RUNTIME" name="Gradle: com.github.spullara.cli-parser:cli-parser:1.1.6" level="project" />
+    <orderEntry type="library" scope="RUNTIME" name="Gradle: commons-logging:commons-logging:1.2" level="project" />
+    <orderEntry type="library" scope="RUNTIME" name="Gradle: org.codehaus.groovy:groovy:3.0.19" level="project" />
+    <orderEntry type="library" scope="RUNTIME" name="Gradle: com.thoughtworks.xstream:xstream:1.4.20" level="project" />
+    <orderEntry type="library" scope="RUNTIME" name="Gradle: org.tukaani:xz:1.10" level="project" />
+    <orderEntry type="library" scope="RUNTIME" name="Gradle: org.jetbrains.kotlinx:kotlinx-html-jvm:0.12.0" level="project" />
+    <orderEntry type="library" scope="RUNTIME" name="Gradle: org.jetbrains.jediterm:jediterm-core:3.50" level="project" />
+    <orderEntry type="library" scope="RUNTIME" name="Gradle: org.jetbrains.jediterm:jediterm-ui:3.50" level="project" />
+    <orderEntry type="library" scope="RUNTIME" name="Gradle: io.ktor:ktor-network-tls-jvm:3.0.3" level="project" />
+    <orderEntry type="library" scope="RUNTIME" name="Gradle: com.googlecode.plist:dd-plist:1.28" level="project" />
+    <orderEntry type="library" scope="RUNTIME" name="Gradle: org.snakeyaml:snakeyaml-engine:2.9" level="project" />
+    <orderEntry type="library" scope="RUNTIME" name="Gradle: com.jetbrains.intellij.platform:test-framework-team-city:251.23774.435" level="project" />
+    <orderEntry type="library" scope="RUNTIME" name="Gradle: net.bytebuddy:byte-buddy:1.14.18" level="project" />
+    <orderEntry type="library" scope="RUNTIME" name="Gradle: org.junit.jupiter:junit-jupiter:5.11.3" level="project" />
+    <orderEntry type="library" scope="RUNTIME" name="Gradle: org.junit.platform:junit-platform-commons:1.11.3" level="project" />
+    <orderEntry type="library" scope="RUNTIME" name="Gradle: com.jetbrains.intellij.tools:ide-starter-bus:251.23774.435" level="project" />
+    <orderEntry type="library" scope="RUNTIME" name="Gradle: io.qameta.allure:allure-model:2.25.0" level="project" />
+    <orderEntry type="library" scope="RUNTIME" name="Gradle: io.opentelemetry:opentelemetry-sdk-trace:1.47.0" level="project" />
+    <orderEntry type="library" scope="RUNTIME" name="Gradle: io.opentelemetry:opentelemetry-sdk-metrics:1.47.0" level="project" />
+    <orderEntry type="library" scope="RUNTIME" name="Gradle: io.opentelemetry:opentelemetry-sdk-logs:1.47.0" level="project" />
+    <orderEntry type="library" scope="RUNTIME" name="Gradle: io.opentelemetry:opentelemetry-sdk-common:1.47.0" level="project" />
+    <orderEntry type="library" scope="RUNTIME" name="Gradle: io.opentelemetry:opentelemetry-api:1.47.0" level="project" />
+    <orderEntry type="library" scope="RUNTIME" name="Gradle: com.fasterxml.jackson.core:jackson-annotations:2.17.2" level="project" />
+    <orderEntry type="library" scope="RUNTIME" name="Gradle: org.apache.httpcomponents:httpclient:4.5.14" level="project" />
+    <orderEntry type="library" scope="RUNTIME" name="Gradle: net.java.dev.jna:jna:5.14.0" level="project" />
+    <orderEntry type="library" scope="RUNTIME" name="Gradle: com.miglayout:miglayout-core:11.4" level="project" />
+    <orderEntry type="library" scope="RUNTIME" name="Gradle: com.google.guava:failureaccess:1.0.2" level="project" />
+    <orderEntry type="library" scope="RUNTIME" name="Gradle: com.google.j2objc:j2objc-annotations:3.0.0" level="project" />
+    <orderEntry type="library" scope="RUNTIME" name="Gradle: io.netty:netty-codec-http:4.2.0.RC2" level="project" />
+    <orderEntry type="library" scope="RUNTIME" name="Gradle: io.netty:netty-handler:4.2.0.RC2" level="project" />
+    <orderEntry type="library" scope="RUNTIME" name="Gradle: io.netty:netty-codec:4.2.0.RC2" level="project" />
+    <orderEntry type="library" scope="RUNTIME" name="Gradle: io.netty:netty-transport:4.2.0.RC2" level="project" />
+    <orderEntry type="library" scope="RUNTIME" name="Gradle: io.netty:netty-common:4.2.0.RC2" level="project" />
+    <orderEntry type="library" scope="RUNTIME" name="Gradle: org.codehaus.woodstox:stax2-api:4.2.2" level="project" />
+    <orderEntry type="library" scope="RUNTIME" name="Gradle: org.bouncycastle:bcutil-jdk18on:1.80" level="project" />
+    <orderEntry type="library" scope="RUNTIME" name="Gradle: com.jetbrains.fus.reporting:model:76" level="project" />
+    <orderEntry type="library" scope="RUNTIME" name="Gradle: org.javadelight:delight-rhino-sandbox:0.0.17" level="project" />
+    <orderEntry type="library" scope="RUNTIME" name="Gradle: io.opentelemetry:opentelemetry-exporter-common:1.47.0" level="project" />
+    <orderEntry type="library" scope="RUNTIME" name="Gradle: io.github.x-stream:mxparser:1.2.2" level="project" />
+    <orderEntry type="library" scope="RUNTIME" name="Gradle: org.junit.jupiter:junit-jupiter-engine:5.11.3" level="project" />
+    <orderEntry type="library" scope="RUNTIME" name="Gradle: org.junit.jupiter:junit-jupiter-params:5.11.3" level="project" />
+    <orderEntry type="library" scope="RUNTIME" name="Gradle: org.jetbrains.kotlinx:kotlinx-coroutines-core-jvm:1.6.4" level="project" />
+    <orderEntry type="library" scope="RUNTIME" name="Gradle: org.kodein.type:kaverit-jvm:2.10.0" level="project" />
+    <orderEntry type="library" scope="RUNTIME" name="Gradle: io.opentelemetry:opentelemetry-context:1.47.0" level="project" />
+    <orderEntry type="library" scope="RUNTIME" name="Gradle: org.apache.httpcomponents:httpcore:4.4.16" level="project" />
+    <orderEntry type="library" scope="RUNTIME" name="Gradle: io.netty:netty-transport-native-unix-common:4.2.0.RC2" level="project" />
+    <orderEntry type="library" scope="RUNTIME" name="Gradle: io.netty:netty-resolver:4.2.0.RC2" level="project" />
+    <orderEntry type="library" scope="RUNTIME" name="Gradle: io.netty:netty-codec-base:4.2.0.RC2" level="project" />
+    <orderEntry type="library" scope="RUNTIME" name="Gradle: org.bouncycastle:bcprov-jdk18on:1.80" level="project" />
+    <orderEntry type="library" scope="RUNTIME" name="Gradle: io.ktor:ktor-events-jvm:3.0.3" level="project" />
+    <orderEntry type="library" scope="RUNTIME" name="Gradle: io.ktor:ktor-websocket-serialization-jvm:3.0.3" level="project" />
+    <orderEntry type="library" scope="RUNTIME" name="Gradle: io.ktor:ktor-sse-jvm:3.0.3" level="project" />
+    <orderEntry type="library" scope="RUNTIME" name="Gradle: io.ktor:ktor-http-jvm:3.0.3" level="project" />
+    <orderEntry type="library" scope="RUNTIME" name="Gradle: xmlpull:xmlpull:1.1.3.1" level="project" />
+    <orderEntry type="library" scope="RUNTIME" name="Gradle: io.ktor:ktor-network-jvm:3.0.3" level="project" />
+    <orderEntry type="library" scope="RUNTIME" name="Gradle: io.ktor:ktor-utils-jvm:3.0.3" level="project" />
+    <orderEntry type="library" scope="RUNTIME" name="Gradle: org.junit.platform:junit-platform-engine:1.11.3" level="project" />
+    <orderEntry type="library" scope="RUNTIME" name="Gradle: io.ktor:ktor-serialization-jvm:3.0.3" level="project" />
+    <orderEntry type="library" scope="RUNTIME" name="Gradle: io.ktor:ktor-io-jvm:3.0.3" level="project" />
+    <orderEntry type="library" scope="RUNTIME" name="Gradle: io.ktor:ktor-websockets-jvm:3.0.3" level="project" />
+    <orderEntry type="library" scope="RUNTIME" name="Gradle: org.jetbrains.kotlinx:kotlinx-io-core-jvm:0.5.4" level="project" />
+    <orderEntry type="library" scope="RUNTIME" name="Gradle: org.jetbrains.kotlinx:kotlinx-io-bytestring-jvm:0.5.4" level="project" />
+  </component>
+</module>

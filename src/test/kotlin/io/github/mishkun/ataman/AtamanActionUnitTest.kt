@@ -31,7 +31,7 @@ class AtamanActionUnitTest : LightPlatform4TestCase() {
                 listOf("SplitVertically", "Unsplit")
             )
         )
-        val popup = LeaderPopup(
+        val popup = LeaderPopupUI(
             project,
             LeaderListStep(
                 "Ataman",
@@ -61,7 +61,7 @@ class AtamanActionUnitTest : LightPlatform4TestCase() {
                 "CommentByLineComment"
             )
         )
-        val popup = LeaderPopup(
+        val popup = LeaderPopupUI(
             project,
             LeaderListStep(
                 "Ataman",
