@@ -82,7 +82,7 @@ intellijPlatform {
         version = project.version.toString()
         ideaVersion {
             sinceBuild = "243"
-            untilBuild = "252.*"
+            untilBuild = "253.*"
         }
     }
     pluginVerification {
@@ -91,7 +91,7 @@ intellijPlatform {
                 types.set(listOf(IntelliJPlatformType.IntellijIdeaCommunity))
                 channels.set(listOf(ProductRelease.Channel.RELEASE))
                 sinceBuild = "243"
-                untilBuild = "252.*"
+                untilBuild = "253.*"
             }
         }
     }
