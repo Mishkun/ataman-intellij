@@ -2,6 +2,7 @@ package io.github.mishkun.ataman
 
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.actionSystem.ActionManager
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.actionSystem.ActionUiKind
 import com.intellij.openapi.actionSystem.ActionUpdateThread
@@ -30,6 +31,7 @@ import javax.swing.JComponent
 import javax.swing.JLabel
 import javax.swing.JList
 import javax.swing.JPanel
+import javax.swing.KeyStroke
 import javax.swing.ListCellRenderer
 import javax.swing.text.JTextComponent
 
@@ -73,12 +75,20 @@ class TransparentLeaderAction : DumbAwareAction() {
 class LeaderAction : DumbAwareAction() {
 
     override fun actionPerformed(event: AnActionEvent) {
+        val keyEventBuffer = service<KeyEventBuffer>()
+        // Start capturing key events immediately, before popup is created
+        keyEventBuffer.startCapturing()
+
+        val configService = service<ConfigService>()
         LeaderPopup(
-            event.project, LeaderListStep(
+            event.project,
+            LeaderListStep(
                 "Ataman",
                 event.dataContext,
-                values = service<ConfigService>().parsedBindings
-            )
+                values = configService.parsedBindings
+            ),
+            keyEventBuffer = keyEventBuffer,
+            bindingsMap = configService.bindingsMap
         ).run {
             val project = event.project
             if (project != null) {
@@ -129,8 +139,12 @@ class LeaderPopup(
     project: Project? = null,
     step: LeaderListStep,
     parent: WizardPopup? = null,
-    parentObject: Any? = null
+    parentObject: Any? = null,
+    private val keyEventBuffer: KeyEventBuffer? = null,
+    private val bindingsMap: Map<KeyStroke, LeaderBinding> = emptyMap()
 ) : ListPopupImpl(project, parent, step, parentObject) {
+
+    private var hasProcessedBufferedEvents = false
 
     init {
         step.values.forEach { binding ->
@@ -143,18 +157,77 @@ class LeaderPopup(
         }
     }
 
+    override fun afterShow() {
+        super.afterShow()
+        // Process buffered events after popup is visible
+        processBufferedEvents()
+    }
+
+    private fun processBufferedEvents() {
+        if (hasProcessedBufferedEvents || keyEventBuffer == null) return
+        hasProcessedBufferedEvents = true
+
+        // Use invokeLater to ensure the popup is fully rendered
+        ApplicationManager.getApplication().invokeLater {
+            val bufferedEvents = keyEventBuffer.drainCapturedEvents()
+            for (event in bufferedEvents) {
+                // Handle escape key
+                if (event.keyCode == KeyEvent.VK_ESCAPE) {
+                    cancel()
+                    return@invokeLater
+                }
+
+                val binding = findBindingForEvent(event)
+                if (binding != null) {
+                    list.setSelectedValue(binding, true)
+                    handleSelect(true)
+                    return@invokeLater
+                }
+            }
+        }
+    }
+
+    private fun findBindingForEvent(event: KeyEvent): LeaderBinding? {
+        val keyStroke = event.toKeyStroke()
+        if (keyStroke != null) {
+            bindingsMap[keyStroke]?.let { return it }
+        }
+
+        // For KEY_TYPED events, also try matching by character
+        if (event.id == KeyEvent.KEY_TYPED && event.keyChar != KeyEvent.CHAR_UNDEFINED) {
+            val charKeyStroke = KeyStroke.getKeyStroke(event.keyChar)
+            bindingsMap[charKeyStroke]?.let { return it }
+        }
+
+        return null
+    }
+
+    override fun dispose() {
+        keyEventBuffer?.stopCapturing()
+        super.dispose()
+    }
+
     override fun process(aEvent: KeyEvent) {
         aEvent.consume()
     }
 
     override fun getListElementRenderer(): ListCellRenderer<*> = ActionItemRenderer()
 
-    override fun createPopup(parent: WizardPopup?, step: PopupStep<*>?, parentValue: Any?) = LeaderPopup(
-        parent?.project,
-        step as LeaderListStep,
-        parent,
-        parentValue
-    )
+    override fun createPopup(parent: WizardPopup?, step: PopupStep<*>?, parentValue: Any?): LeaderPopup {
+        // For nested popups, don't pass the key event buffer since we only need it for the root popup
+        val nestedBindingsMap = if (parentValue is LeaderBinding.GroupBinding) {
+            service<ConfigService>().buildBindingsMap(parentValue.bindings)
+        } else {
+            emptyMap()
+        }
+        return LeaderPopup(
+            parent?.project,
+            step as LeaderListStep,
+            parent,
+            parentValue,
+            bindingsMap = nestedBindingsMap
+        )
+    }
 }
 
 
