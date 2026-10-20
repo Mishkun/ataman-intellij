@@ -53,7 +53,8 @@ kover {
 }
 
 val uiTests by intellijPlatformTesting.testIdeUi.registering {
-    this.type = IntelliJPlatformType.IntellijIdea
+    // Testing tasks require the version-specific type even when dependency helpers infer it.
+    this.type = IntelliJPlatformType.fromCode("IU", platformVersion.get())
     version.set(platformVersion)
     task {
         enabled = gradle.startParameter.taskNames.any { it.contains("uiTests") }
