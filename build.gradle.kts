@@ -91,7 +91,7 @@ intellijPlatform {
         version = project.version.toString()
         ideaVersion {
             sinceBuild = "243"
-            untilBuild = "261.*"
+            untilBuild = "262.*"
         }
     }
     publishing {
@@ -117,7 +117,7 @@ intellijPlatform {
                 types.set(listOf(IntelliJPlatformType.IntellijIdea))
                 channels.set(listOf(ProductRelease.Channel.RELEASE))
                 sinceBuild = "243"
-                untilBuild = "261.*"
+                untilBuild = "262.*"
             }
         }
     }
