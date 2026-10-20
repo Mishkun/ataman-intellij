@@ -21,10 +21,10 @@ jobs:
       contents: write
       pull-requests: write
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           persist-credentials: false
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v7
         with:
           python-version: '3.12'
       - name: Test automation helpers
@@ -34,7 +34,7 @@ jobs:
         run: python scripts/compatibility.py plan --output "$RUNNER_TEMP/compatibility-plan.json"
       - name: Set up JDK 21
         if: steps.plan.outputs.changed == 'true'
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@v6
         with:
           java-version: '21'
           distribution: temurin
@@ -54,7 +54,7 @@ jobs:
       - name: Upload compatibility evidence
         if: always() && steps.plan.outputs.changed == 'true'
         id: reports
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: compatibility-reports
           path: |

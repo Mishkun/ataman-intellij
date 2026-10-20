@@ -29,7 +29,6 @@ java {
 
 val uiTest by sourceSets.registering {
     kotlin.srcDirs("src/uiTest/kotlin")
-    resources.srcDir("src/uiTest/resources")
 
     compileClasspath += sourceSets.main.get().output
     runtimeClasspath += sourceSets.main.get().output
