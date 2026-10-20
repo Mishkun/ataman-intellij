@@ -106,7 +106,8 @@ To find actionId of the action you want to bind, you can use IdeaVim's action "I
 
 ## Building from source
 
-This repo uses [gradle-intellij-plugin](https://github.com/JetBrains/gradle-intellij-plugin/) for building.
+This repo uses the [IntelliJ Platform Gradle Plugin](https://plugins.jetbrains.com/docs/intellij/tools-intellij-platform-gradle-plugin.html).
+Use JDK 21 and the checked-in Gradle Wrapper.
 To build plugin, use this command:
 
 ```
@@ -120,7 +121,72 @@ For running tests:
 ./gradlew uiTests    # UI tests
 ```
 
-For more advanced usecases, please refer to gradle-intellij-plugin documentation.
+To run the build, unit tests, and binary compatibility checks:
+
+```sh
+./gradlew build verifyPlugin
+```
+
+The supported range is declared by the two matching literal `sinceBuild = "243"`
+and `untilBuild = "261.*"` settings in `build.gradle.kts`: plugin metadata and the
+fallback verifier selector. This CI change does not include PR #40's range increase.
+Verification on a newer IDE is a forward check, not a declaration of support.
+
+`gradle.properties` configures the compilation platform. The verifier matrix is optional:
+
+- `platformVersion`: fixed IDEA version used to compile and run tests.
+- `pluginVerificationVersions`: optional comma-separated exact IDEA versions or build numbers checked by Plugin Verifier; not set by default.
+
+When `pluginVerificationVersions` is present, only those exact IDEA targets are
+checked. Without it, CI checks IDEA 2024.3 plus the latest stable IDEA selected
+within the literal supported range in `build.gradle.kts`. A later range increase
+automatically changes that latest target; there is no fixed default override.
+
+To check a specific IDEA build without changing these defaults:
+
+```sh
+./gradlew verifyPlugin -PpluginVerificationVersions=2024.3,2026.1
+```
+
+Plugin ZIPs are written to `build/distributions/`; compatibility reports are in
+`build/reports/pluginVerifier/`. Plugin Verifier checks binary compatibility;
+it does not replace the UI tests or a manual interaction check.
+
+## CI and releases
+
+Pull requests run the build and Plugin Verifier without publishing credentials.
+The compatibility workflow runs daily at 08:23 UTC and can also be started manually.
+It checks the official IntelliJ IDEA release feed and opens or updates a PR when
+a newer platform branch is available. It prefers a current RC, or a newer stable
+release when the RC has already been superseded. It does not raise the minimum
+supported version or change the compilation platform. It updates both `untilBuild`
+literals and adds or updates the optional explicit matrix in `gradle.properties`.
+The PR includes verification results and links to reports; failed checks do not
+enable automatic merging.
+GitHub can disable scheduled workflows in public repositories after 60 days
+without repository activity. Re-enable the workflow in Actions if this happens.
+
+The release workflow starts after a push or merge to `master` and releases a patch
+version automatically. It can also be started manually with `workflow_dispatch`
+for a minor/major release or a retry. It builds and verifies the release, and atomically pushes the release commit
+and tag. It then saves the checked ZIP and its checksum in a draft GitHub release,
+uploads that ZIP to JetBrains Marketplace, and publishes the draft. Configure the repository secret
+`JETBRAINS_MARKETPLACE_TOKEN` before running it. The snapshot workflow publishes
+GitHub artifacts only, not Marketplace updates.
+The version commit uses `GITHUB_TOKEN` and does not trigger another release.
+
+Compatibility PRs can use the repository's `GITHUB_TOKEN`. For ordinary PR checks
+to start without manual approval, optionally configure a GitHub App with repository
+contents and pull-request write permissions: set the repository variable `CI_APP_ID`
+and secret `CI_APP_PRIVATE_KEY`. The scheduled workflow runs verification itself
+even when it falls back to `GITHUB_TOKEN`.
+
+Marketplace upload and GitHub release creation are separate operations. If a run
+fails, inspect the version on Marketplace first. If it was not uploaded, retry with
+`existing_tag=vMAJOR.MINOR.PATCH` and `retry_publish_confirmed=true`: the workflow
+restores and re-verifies the saved ZIP without a version bump. Missing draft assets
+can be rebuilt from that exact tag. If Marketplace already accepted the upload,
+publish the existing GitHub draft manually instead of uploading again.
 
 ## License
 

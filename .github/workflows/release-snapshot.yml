@@ -4,16 +4,24 @@ on:
   push:
     branches: [ master ]
 
+permissions:
+  contents: write
+
+concurrency:
+  group: snapshot-${{ github.ref }}
+  cancel-in-progress: false
+
 jobs:
   release-snapshot:
     runs-on: ubuntu-latest
+    timeout-minutes: 45
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           fetch-depth: 2  # Need at least 2 commits to get the commit message
       
       - name: Set up JDK 21
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@v6
         with:
           java-version: '21'
           distribution: 'temurin'
@@ -50,7 +58,8 @@ jobs:
             ${{ steps.get_commit.outputs.COMMIT_MESSAGE }}
             
             This is an automated snapshot release created from the latest commit to the master branch.
-          files: build/distributions/*.jar
+          files: build/distributions/*.zip
+          fail_on_unmatched_files: true
           prerelease: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

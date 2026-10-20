@@ -167,3 +167,7 @@ Temporary Items
 /.idea/modules.xml
 /allure-results/
 /.intellijPlatform/
+
+# Python helpers used by CI
+__pycache__/
+*.py[cod]
