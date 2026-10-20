@@ -1,6 +1,7 @@
 import org.jetbrains.intellij.platform.gradle.IntelliJPlatformType
 import org.jetbrains.intellij.platform.gradle.TestFrameworkType
 import org.jetbrains.intellij.platform.gradle.models.ProductRelease
+import org.jetbrains.intellij.platform.gradle.tasks.VerifyPluginTask
 import java.io.File
 
 plugins {
@@ -97,6 +98,12 @@ intellijPlatform {
         token = providers.environmentVariable("JETBRAINS_MARKETPLACE_TOKEN")
     }
     pluginVerification {
+        // API-usage warnings remain in reports; broken compatibility blocks a release.
+        failureLevel = listOf(
+            VerifyPluginTask.FailureLevel.COMPATIBILITY_PROBLEMS,
+            VerifyPluginTask.FailureLevel.INVALID_PLUGIN,
+            VerifyPluginTask.FailureLevel.MISSING_DEPENDENCIES,
+        )
         ides {
             val explicitVersions = pluginVerificationVersions.orNull
             if (explicitVersions != null) {
