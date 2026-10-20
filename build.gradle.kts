@@ -142,6 +142,7 @@ val publishingArchive = layout.file(providers.gradleProperty("publishingArchive"
 }).orElse(tasks.buildPlugin.flatMap { it.archiveFile })
 
 tasks.verifyPlugin {
+    dependsOn(tasks.buildPlugin)
     archiveFile.set(publishingArchive)
 }
 
