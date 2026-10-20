@@ -1,1 +1,1 @@
-- Add CI verification and automatic Marketplace releases (#41)
+- Bump max IDE version to 2026.2 (#40)
