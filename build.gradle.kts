@@ -81,7 +81,7 @@ repositories {
 }
 
 group = "io.github.mishkun"
-version = "1.5.1"
+version = "1.5.2"
 
 intellijPlatform {
     instrumentCode.set(false)
