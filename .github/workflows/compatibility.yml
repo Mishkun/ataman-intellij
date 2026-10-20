@@ -1,0 +1,104 @@
+name: Check new IntelliJ IDEA compatibility
+
+on:
+  schedule:
+    - cron: '23 8 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: idea-compatibility
+  cancel-in-progress: false
+
+jobs:
+  compatibility:
+    if: github.ref_name == github.event.repository.default_branch
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    permissions:
+      contents: write
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Test automation helpers
+        run: python -m unittest discover -s tests -p 'test_*.py'
+      - name: Discover exact candidate and update compatibility properties
+        id: plan
+        run: python scripts/compatibility.py plan --output "$RUNNER_TEMP/compatibility-plan.json"
+      - name: Set up JDK 21
+        if: steps.plan.outputs.changed == 'true'
+        uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: temurin
+          cache: gradle
+      - name: Build and test proposed compatibility
+        if: steps.plan.outputs.changed == 'true'
+        id: build
+        continue-on-error: true
+        shell: bash
+        run: ./gradlew build --no-daemon 2>&1 | tee "$RUNNER_TEMP/compatibility-build.log"
+      - name: Verify the explicit IDE matrix
+        if: steps.plan.outputs.changed == 'true'
+        id: verifier
+        continue-on-error: true
+        shell: bash
+        run: ./gradlew verifyPlugin --no-daemon 2>&1 | tee "$RUNNER_TEMP/compatibility-verifier.log"
+      - name: Upload compatibility evidence
+        if: always() && steps.plan.outputs.changed == 'true'
+        id: reports
+        uses: actions/upload-artifact@v4
+        with:
+          name: compatibility-reports
+          path: |
+            build/reports/pluginVerifier/
+            build/reports/tests/
+            build/test-results/
+            ${{ runner.temp }}/compatibility-*.log
+            ${{ runner.temp }}/compatibility-plan.json
+      - name: Write factual PR body
+        if: always() && steps.plan.outputs.changed == 'true'
+        env:
+          BUILD_STATUS: ${{ steps.build.outcome }}
+          VERIFIER_STATUS: ${{ steps.verifier.outcome }}
+          REPORT_URL: ${{ steps.reports.outputs.artifact-url }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: python scripts/compatibility.py report --plan "$RUNNER_TEMP/compatibility-plan.json" --output "$RUNNER_TEMP/compatibility-body.md"
+      - name: Create narrowly scoped GitHub App token (optional)
+        if: always() && steps.plan.outputs.changed == 'true' && vars.CI_APP_ID != ''
+        id: app
+        uses: actions/create-github-app-token@v2
+        with:
+          app-id: ${{ vars.CI_APP_ID }}
+          private-key: ${{ secrets.CI_APP_PRIVATE_KEY }}
+          permission-contents: write
+          permission-pull-requests: write
+      - name: Create or update one PR per IDE platform branch
+        if: always() && steps.plan.outputs.changed == 'true'
+        uses: peter-evans/create-pull-request@v7
+        with:
+          token: ${{ steps.app.outputs.token || github.token }}
+          base: ${{ github.event.repository.default_branch }}
+          branch: ${{ steps.plan.outputs.branch }}
+          delete-branch: false
+          add-paths: |
+            build.gradle.kts
+            gradle.properties
+          commit-message: 'Check IntelliJ IDEA compatibility through ${{ steps.plan.outputs.until }}'
+          title: 'Check IntelliJ IDEA compatibility through ${{ steps.plan.outputs.until }}'
+          body-path: ${{ runner.temp }}/compatibility-body.md
+      - name: Keep failed compatibility checks red
+        if: always() && steps.plan.outputs.changed == 'true'
+        env:
+          BUILD_STATUS: ${{ steps.build.outcome }}
+          VERIFIER_STATUS: ${{ steps.verifier.outcome }}
+        run: |
+          test "$BUILD_STATUS" = success
+          test "$VERIFIER_STATUS" = success

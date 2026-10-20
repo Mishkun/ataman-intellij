@@ -1,122 +1,158 @@
 name: Build & Release Plugin
 
 on:
+  # Release commits are pushed with GITHUB_TOKEN, so they do not trigger this again.
+  push:
+    branches: [master]
   workflow_dispatch:
     inputs:
       release_type:
-        description: 'Release Type'
+        description: Release type
         required: true
-        default: 'patch'
+        default: patch
         type: choice
-        options:
-          - patch
-          - minor
-          - major
+        options: [patch, minor, major]
       additional_notes:
-        description: 'Additional Release Notes (optional)'
+        description: Additional release notes (optional)
         required: false
         type: string
+      existing_tag:
+        description: 'Retry this existing vMAJOR.MINOR.PATCH tag without a version bump (optional)'
+        required: false
+        type: string
+      retry_publish_confirmed:
+        description: 'For retry: I checked Marketplace and this version is NOT already published'
+        required: false
+        default: false
+        type: boolean
+
+permissions:
+  contents: read
+
+concurrency:
+  group: marketplace-release
+  cancel-in-progress: false
 
 jobs:
-  build-and-release:
+  release:
+    if: github.repository == 'Mishkun/ataman-intellij' && github.ref == 'refs/heads/master' && github.event.repository.default_branch == 'master'
+    permissions:
+      contents: write
     runs-on: ubuntu-latest
+    timeout-minutes: 90
     steps:
+      - name: Check Marketplace publishing credentials before changing source
+        env:
+          JETBRAINS_MARKETPLACE_TOKEN: ${{ secrets.JETBRAINS_MARKETPLACE_TOKEN }}
+        run: |
+          if test -z "$JETBRAINS_MARKETPLACE_TOKEN"; then
+            echo '::error::Missing repository secret JETBRAINS_MARKETPLACE_TOKEN. Add it in GitHub Actions secrets before releasing.'
+            exit 1
+          fi
       - uses: actions/checkout@v4
         with:
-          fetch-depth: 0  # Fetch all history for tags and commits
-      
-      - name: Set up JDK 21
-        uses: actions/setup-java@v4
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - uses: actions/setup-java@v4
         with:
           java-version: '21'
-          distribution: 'temurin'
+          distribution: temurin
           cache: gradle
-      
-      - name: Get current version
-        id: get_current_version
-        run: echo "CURRENT_VERSION=$(grep 'version =' build.gradle.kts | head -n 1 | cut -d '"' -f 2)" >> $GITHUB_OUTPUT
-
-      - name: Calculate new version
-        id: calculate_version
+      - name: Test automation helpers
+        run: python -m unittest discover -s tests -p 'test_*.py'
+      - name: Prepare final version and local release commit
+        id: prepare
+        env:
+          RELEASE_TYPE: ${{ inputs.release_type || 'patch' }}
+          ADDITIONAL_NOTES: ${{ inputs.additional_notes }}
+          EXISTING_TAG: ${{ inputs.existing_tag }}
+          RETRY_PUBLISH_CONFIRMED: ${{ inputs.retry_publish_confirmed }}
         run: |
-          CURRENT_VERSION=${{ steps.get_current_version.outputs.CURRENT_VERSION }}
-          RELEASE_TYPE=${{ github.event.inputs.release_type }}
-          
-          major=$(echo $CURRENT_VERSION | cut -d. -f1)
-          minor=$(echo $CURRENT_VERSION | cut -d. -f2)
-          patch=$(echo $CURRENT_VERSION | cut -d. -f3)
-          
-          if [ "$RELEASE_TYPE" == "major" ]; then
-            major=$((major + 1))
-            minor=0
-            patch=0
-          elif [ "$RELEASE_TYPE" == "minor" ]; then
-            minor=$((minor + 1))
-            patch=0
+          python scripts/release.py prepare
+          if test -z "$EXISTING_TAG"; then
+            git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+            git config user.name 'github-actions[bot]'
+            git add build.gradle.kts changelog.txt
+            git commit -m "Release $(cat "$RUNNER_TEMP/release-version")"
+            git tag -a "$(cat "$RUNNER_TEMP/release-tag")" -m "Release $(cat "$RUNNER_TEMP/release-version")"
+          fi
+      - name: Restore frozen draft assets for an existing tag
+        id: restore
+        env:
+          EXISTING_TAG: ${{ inputs.existing_tag }}
+          GH_TOKEN: ${{ github.token }}
+        run: python scripts/release.py restore
+      - name: Build, test and verify final release
+        env:
+          RESTORED: ${{ steps.restore.outputs.restored }}
+          FROZEN_ZIP: ${{ steps.restore.outputs.archive }}
+        run: |
+          if test "$RESTORED" = true; then
+            ./gradlew build verifyPlugin "-PpublishingArchive=$FROZEN_ZIP" --no-daemon
           else
-            patch=$((patch + 1))
+            ./gradlew build verifyPlugin --no-daemon
           fi
-          
-          NEW_VERSION="${major}.${minor}.${patch}"
-          echo "NEW_VERSION=${NEW_VERSION}" >> $GITHUB_OUTPUT
-
-      - name: Update version in build.gradle.kts
-        run: |
-          sed -i "s/version = \"${{ steps.get_current_version.outputs.CURRENT_VERSION }}\"/version = \"${{ steps.calculate_version.outputs.NEW_VERSION }}\"/" build.gradle.kts
-
-      - name: Generate changelog from commits
-        id: generate_changelog
-        run: |
-          # Find the latest tag
-          LATEST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "")
-          
-          if [ -z "$LATEST_TAG" ]; then
-            # If no tags exist, use all commits
-            echo "No previous tags found. Using all commits for changelog."
-            CHANGELOG=$(git log --pretty=format:"- %s" --no-merges)
-          else
-            echo "Found latest tag: $LATEST_TAG"
-            # Get commits since the latest tag
-            CHANGELOG=$(git log ${LATEST_TAG}..HEAD --pretty=format:"- %s" --no-merges)
-          fi
-          
-          # Add additional notes if provided
-          ADDITIONAL_NOTES="${{ github.event.inputs.additional_notes }}"
-          if [ ! -z "$ADDITIONAL_NOTES" ]; then
-            CHANGELOG="${ADDITIONAL_NOTES}
-          
-            ${CHANGELOG}"
-          fi
-          
-          # Save changelog to file for build
-          echo "$CHANGELOG" > changelog.txt
-          
-          # Save changelog for GitHub release body
-          CHANGELOG="${CHANGELOG//'%'/'%25'}"
-          CHANGELOG="${CHANGELOG//$'\n'/'%0A'}"
-          CHANGELOG="${CHANGELOG//$'\r'/'%0D'}"
-          echo "CHANGELOG=${CHANGELOG}" >> $GITHUB_OUTPUT
-      
-      - name: Build plugin
-        run: ./gradlew buildPlugin
-      
-      - name: Commit version bump and changelog
-        run: |
-          git config --local user.email "action@github.com"
-          git config --local user.name "GitHub Action"
-          git add build.gradle.kts changelog.txt
-          git commit -m "Bump version to ${{ steps.calculate_version.outputs.NEW_VERSION }}"
-          git tag -a "v${{ steps.calculate_version.outputs.NEW_VERSION }}" -m "Version ${{ steps.calculate_version.outputs.NEW_VERSION }}"
-          git push --follow-tags
-      
-      - name: Create GitHub Release
+      - name: Freeze tested archive
+        if: steps.restore.outputs.restored != 'true'
+        run: python scripts/release.py freeze
+      - name: Check frozen archive
+        id: archive
+        run: python scripts/release.py check
+      - name: Upload tested release ZIP
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-archive
+          path: ${{ runner.temp }}/release/
+          if-no-files-found: error
+      - name: Push source commit and tag before any Marketplace publication
+        if: inputs.existing_tag == ''
+        run: python scripts/release.py push
+      - name: Preserve frozen ZIP and checksum in a draft release before Marketplace
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: v${{ steps.calculate_version.outputs.NEW_VERSION }}
-          name: Release v${{ steps.calculate_version.outputs.NEW_VERSION }}
-          body: ${{ steps.generate_changelog.outputs.CHANGELOG }}
-          files: build/distributions/*.jar
-          draft: false
+          tag_name: v${{ steps.prepare.outputs.version }}
+          name: Release v${{ steps.prepare.outputs.version }}
+          body_path: ${{ runner.temp }}/release-body.md
+          files: |
+            ${{ runner.temp }}/release/*.zip
+            ${{ runner.temp }}/release/release-manifest.json
+          fail_on_unmatched_files: true
+          draft: true
           prerelease: false
+      - name: Publish exactly the frozen ZIP to Marketplace
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          JETBRAINS_MARKETPLACE_TOKEN: ${{ secrets.JETBRAINS_MARKETPLACE_TOKEN }}
+          FROZEN_ZIP: ${{ steps.archive.outputs.archive }}
+        run: |
+          test -n "$JETBRAINS_MARKETPLACE_TOKEN"
+          python scripts/release.py check
+          ./gradlew publishPlugin "-PpublishingArchive=$FROZEN_ZIP" --no-daemon
+          python scripts/release.py check
+      - name: Publish the preserved GitHub draft release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release edit "$(cat "$RUNNER_TEMP/release-tag")" --repo "$GITHUB_REPOSITORY" --draft=false
+      - name: Explain non-transactional failure recovery
+        if: failure()
+        run: |
+          cat >> "$GITHUB_STEP_SUMMARY" <<'NOTES'
+          Release failed. Marketplace and GitHub are not one transaction.
+          If Marketplace may have accepted the upload (including a lost response), check the version there manually first.
+          If it is already published, finalize the existing GitHub draft manually; do not publish or bump again.
+          Otherwise dispatch from master with existing_tag=vMAJOR.MINOR.PATCH and retry_publish_confirmed=true.
+          This reuses and re-verifies the stored ZIP; it does not bump the version. Missing draft assets can be rebuilt only from that trusted tag.
+          NOTES
+      - name: Upload release diagnostics
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-reports
+          path: |
+            build/reports/pluginVerifier/
+            build/reports/tests/
+            build/test-results/
+            ${{ runner.temp }}/release-body.md
+            ${{ runner.temp }}/verified-archive.json

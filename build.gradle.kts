@@ -1,11 +1,19 @@
 import org.jetbrains.intellij.platform.gradle.IntelliJPlatformType
 import org.jetbrains.intellij.platform.gradle.TestFrameworkType
 import org.jetbrains.intellij.platform.gradle.models.ProductRelease
+import java.io.File
 
 plugins {
     kotlin("jvm") version "2.0.20"
-    id("org.jetbrains.intellij.platform") version "2.5.0"
+    id("org.jetbrains.intellij.platform") version "2.19.0"
     id("org.jetbrains.kotlinx.kover") version "0.9.1"
+}
+
+val platformVersion = providers.gradleProperty("platformVersion")
+val pluginVerificationVersions = providers.gradleProperty("pluginVerificationVersions").map { versions ->
+    versions.split(',').map(String::trim).filter(String::isNotEmpty).distinct().also {
+        require(it.isNotEmpty()) { "pluginVerificationVersions must contain at least one IDE version" }
+    }
 }
 
 kotlin {
@@ -45,8 +53,8 @@ kover {
 }
 
 val uiTests by intellijPlatformTesting.testIdeUi.registering {
-    this.type = IntelliJPlatformType.IntellijIdeaCommunity
-    version.set("2025.1")
+    this.type = IntelliJPlatformType.IntellijIdea
+    version.set(platformVersion)
     task {
         enabled = gradle.startParameter.taskNames.any { it.contains("uiTests") }
         archiveFile.set(tasks.buildPlugin.flatMap { it.archiveFile })
@@ -85,10 +93,21 @@ intellijPlatform {
             untilBuild = "261.*"
         }
     }
+    publishing {
+        token = providers.environmentVariable("JETBRAINS_MARKETPLACE_TOKEN")
+    }
     pluginVerification {
         ides {
-            select {
-                types.set(listOf(IntelliJPlatformType.IntellijIdeaCommunity))
+            val explicitVersions = pluginVerificationVersions.orNull
+            if (explicitVersions != null) {
+                explicitVersions.forEach { ideVersion ->
+                    create(IntelliJPlatformType.IntellijIdea, ideVersion)
+                }
+                return@ides
+            }
+            create(IntelliJPlatformType.IntellijIdea, "2024.3")
+            latest {
+                types.set(listOf(IntelliJPlatformType.IntellijIdea))
                 channels.set(listOf(ProductRelease.Channel.RELEASE))
                 sinceBuild = "243"
                 untilBuild = "261.*"
@@ -99,7 +118,7 @@ intellijPlatform {
 
 dependencies {
     intellijPlatform {
-        intellijIdeaCommunity("2025.1")
+        intellijIdea(platformVersion)
         testFramework(TestFrameworkType.Platform)
         testFramework(TestFrameworkType.Starter, configurationName = "uiTestImplementation")
         pluginVerifier()
@@ -116,4 +135,17 @@ dependencies {
     }
 
     uiTestImplementation("org.jetbrains.kotlinx:kotlinx-datetime:0.6.0")
+}
+
+val publishingArchive = layout.file(providers.gradleProperty("publishingArchive").map { path ->
+    File(path).also { require(it.isAbsolute) { "publishingArchive must be an absolute path" } }
+}).orElse(tasks.buildPlugin.flatMap { it.archiveFile })
+
+tasks.verifyPlugin {
+    archiveFile.set(publishingArchive)
+}
+
+tasks.publishPlugin {
+    dependsOn(tasks.build, tasks.verifyPlugin)
+    archiveFiles.setFrom(publishingArchive)
 }

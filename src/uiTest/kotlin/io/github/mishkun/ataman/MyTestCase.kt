@@ -14,7 +14,7 @@ object UltimateCase : TestCaseTemplate(IdeProductProvider.IU) {
     )
 }
 
-object MyTestCase : TestCaseTemplate(IdeProductProvider.IC) {
+object MyTestCase : TestCaseTemplate(IdeProductProvider.IU) {
 
     val simpleProject = withProject(
         GitHubProject.fromGithub(

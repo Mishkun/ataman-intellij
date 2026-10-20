@@ -4,9 +4,17 @@ on:
   push:
     branches: [ master ]
 
+permissions:
+  contents: write
+
+concurrency:
+  group: snapshot-${{ github.ref }}
+  cancel-in-progress: false
+
 jobs:
   release-snapshot:
     runs-on: ubuntu-latest
+    timeout-minutes: 45
     steps:
       - uses: actions/checkout@v4
         with:
@@ -50,7 +58,8 @@ jobs:
             ${{ steps.get_commit.outputs.COMMIT_MESSAGE }}
             
             This is an automated snapshot release created from the latest commit to the master branch.
-          files: build/distributions/*.jar
+          files: build/distributions/*.zip
+          fail_on_unmatched_files: true
           prerelease: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
