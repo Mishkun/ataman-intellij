@@ -1,6 +1,7 @@
 package io.github.mishkun.ataman
 
 import com.intellij.ide.DataManager
+import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.ex.AnActionListener
@@ -12,11 +13,11 @@ import org.junit.Test
 
 class AtamanActionUnitTest : LightPlatform4TestCase() {
 
-    private val recentActions = mutableListOf<String>()
+    private val recentActions = mutableListOf<String?>()
 
     private val myActionListener = object : AnActionListener {
         override fun beforeActionPerformed(action: AnAction, event: AnActionEvent) {
-            recentActions.add(action.javaClass.simpleName)
+            recentActions.add(ActionManager.getInstance().getId(action))
         }
     }
 
@@ -44,7 +45,7 @@ class AtamanActionUnitTest : LightPlatform4TestCase() {
         assertThat(
             recentActions,
             Matchers.containsInRelativeOrder(
-                "SplitVerticallyAction",
+                "SplitVertically",
                 "Unsplit"
             )
         )
@@ -71,7 +72,7 @@ class AtamanActionUnitTest : LightPlatform4TestCase() {
         )
         popup.selectAndExecuteValue('c')
         popup.handleSelect(true)
-        assertThat(recentActions, Matchers.contains("CommentByLineCommentAction"))
+        assertThat(recentActions, Matchers.contains("CommentByLineComment"))
     }
 
     @Suppress("DEPRECATION")
