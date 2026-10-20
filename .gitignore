@@ -116,6 +116,9 @@ tags
 
 ### Gradle template
 .gradle
+/.kotlin/
+__pycache__/
+*.pyc
 /build/
 
 # Ignore Gradle GUI config

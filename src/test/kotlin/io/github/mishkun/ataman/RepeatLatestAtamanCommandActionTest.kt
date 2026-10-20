@@ -1,6 +1,7 @@
 package io.github.mishkun.ataman
 
 import com.intellij.ide.DataManager
+import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.ex.AnActionListener
@@ -13,11 +14,11 @@ import org.junit.Test
 
 class RepeatLatestAtamanCommandActionTest : BaseTestWithConfig() {
 
-    private val recentActions = mutableListOf<String>()
+    private val recentActions = mutableListOf<String?>()
 
     private val myActionListener = object : AnActionListener {
         override fun beforeActionPerformed(action: AnAction, event: AnActionEvent) {
-            recentActions.add(action.javaClass.simpleName)
+            recentActions.add(ActionManager.getInstance().getId(action))
         }
     }
 
@@ -47,9 +48,9 @@ class RepeatLatestAtamanCommandActionTest : BaseTestWithConfig() {
         assertThat(
             recentActions,
             Matchers.containsInRelativeOrder(
-                "CommentByLineCommentAction",
+                "CommentByLineComment",
                 "RepeatLatestAtamanCommandAction",
-                "CommentByLineCommentAction"
+                "CommentByLineComment"
             )
         )
     }

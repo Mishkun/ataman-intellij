@@ -1,11 +1,19 @@
 import org.jetbrains.intellij.platform.gradle.IntelliJPlatformType
 import org.jetbrains.intellij.platform.gradle.TestFrameworkType
 import org.jetbrains.intellij.platform.gradle.models.ProductRelease
+import org.jetbrains.intellij.platform.gradle.tasks.VerifyPluginTask
 
 plugins {
     kotlin("jvm") version "2.0.20"
-    id("org.jetbrains.intellij.platform") version "2.5.0"
+    id("org.jetbrains.intellij.platform") version "2.19.0"
     id("org.jetbrains.kotlinx.kover") version "0.9.1"
+}
+
+val platformVersion = providers.gradleProperty("platformVersion")
+val pluginVerificationVersions = providers.gradleProperty("pluginVerificationVersions").map { versions ->
+    versions.split(',').map(String::trim).filter(String::isNotEmpty).distinct().also {
+        require(it.isNotEmpty()) { "pluginVerificationVersions must contain at least one IDE version" }
+    }
 }
 
 kotlin {
@@ -21,7 +29,6 @@ java {
 
 val uiTest by sourceSets.registering {
     kotlin.srcDirs("src/uiTest/kotlin")
-    resources.srcDir("src/uiTest/resources")
 
     compileClasspath += sourceSets.main.get().output
     runtimeClasspath += sourceSets.main.get().output
@@ -45,8 +52,8 @@ kover {
 }
 
 val uiTests by intellijPlatformTesting.testIdeUi.registering {
-    this.type = IntelliJPlatformType.IntellijIdeaCommunity
-    version.set("2025.1")
+    this.type = IntelliJPlatformType.fromCode("IU", platformVersion.get())
+    version.set(platformVersion)
     task {
         enabled = gradle.startParameter.taskNames.any { it.contains("uiTests") }
         archiveFile.set(tasks.buildPlugin.flatMap { it.archiveFile })
@@ -72,7 +79,7 @@ repositories {
 }
 
 group = "io.github.mishkun"
-version = "2.0.0"
+version = "2.0.0-rc3"
 
 intellijPlatform {
     instrumentCode.set(false)
@@ -82,16 +89,30 @@ intellijPlatform {
         version = project.version.toString()
         ideaVersion {
             sinceBuild = "243"
-            untilBuild = "261.*"
+            untilBuild = "262.*"
         }
     }
     pluginVerification {
+        // Keep API warnings visible; compatibility errors block the release.
+        failureLevel = listOf(
+            VerifyPluginTask.FailureLevel.COMPATIBILITY_PROBLEMS,
+            VerifyPluginTask.FailureLevel.INVALID_PLUGIN,
+            VerifyPluginTask.FailureLevel.MISSING_DEPENDENCIES,
+        )
         ides {
-            select {
-                types.set(listOf(IntelliJPlatformType.IntellijIdeaCommunity))
+            val explicitVersions = pluginVerificationVersions.orNull
+            if (explicitVersions != null) {
+                explicitVersions.forEach { ideVersion ->
+                    create(IntelliJPlatformType.IntellijIdea, ideVersion)
+                }
+                return@ides
+            }
+            create(IntelliJPlatformType.IntellijIdea, "2024.3")
+            latest {
+                types.set(listOf(IntelliJPlatformType.IntellijIdea))
                 channels.set(listOf(ProductRelease.Channel.RELEASE))
                 sinceBuild = "243"
-                untilBuild = "261.*"
+                untilBuild = "262.*"
             }
         }
     }
@@ -99,7 +120,7 @@ intellijPlatform {
 
 dependencies {
     intellijPlatform {
-        intellijIdeaCommunity("2025.1")
+        intellijIdea(platformVersion)
         testFramework(TestFrameworkType.Platform)
         testFramework(TestFrameworkType.Starter, configurationName = "uiTestImplementation")
         pluginVerifier()
@@ -116,4 +137,8 @@ dependencies {
     }
 
     uiTestImplementation("org.jetbrains.kotlinx:kotlinx-datetime:0.6.0")
+}
+
+tasks.verifyPlugin {
+    dependsOn(tasks.buildPlugin)
 }

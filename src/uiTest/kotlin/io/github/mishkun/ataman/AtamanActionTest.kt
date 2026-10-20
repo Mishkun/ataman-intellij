@@ -24,6 +24,7 @@ import org.hamcrest.Matchers.equalTo
 import org.hamcrest.Matchers.notNullValue
 import org.junit.Test
 import java.awt.event.KeyEvent
+import java.nio.file.Paths
 
 class AtamanActionTest {
 
@@ -87,7 +88,10 @@ class AtamanActionTest {
             .disableAutoImport(disabled = true)
         testContext.pluginConfigurator.installPluginFromPath(System.getenv("ATAMAN_PLUGIN_PATH").toNioPathOrNull()!!)
         CommandChain().waitForDumbMode(10)
-        testContext.runIdeWithConfiguredDriver().useDriverAndCloseIde {
+        val defaultConfigFolder = Paths.get(
+            requireNotNull(javaClass.getResource("/default-config")).toURI()
+        ).toString()
+        testContext.runIdeWithConfiguredDriver(defaultConfigFolder).useDriverAndCloseIde {
             waitForProjectOpen()
             this.invokeAction("LeaderAction")
             ideFrame {
@@ -97,7 +101,9 @@ class AtamanActionTest {
         }
     }
 
-    private fun IDETestContext.runIdeWithConfiguredDriver(): BackgroundRun {
+    private fun IDETestContext.runIdeWithConfiguredDriver(
+        configFolder: String = System.getProperty("ataman.configFolder")
+    ): BackgroundRun {
         val commands = CommandChain().waitForDumbMode(10)
 
         return this.runIdeWithDriver(
@@ -105,7 +111,7 @@ class AtamanActionTest {
             commandLine = {
                 IDECommandLine.OpenTestCaseProject(
                     this,
-                    listOf("-Dataman.configFolder=${System.getProperty("ataman.configFolder")}")
+                    listOf("-Dataman.configFolder=$configFolder")
                 )
             }
         )
