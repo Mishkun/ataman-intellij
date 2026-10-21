@@ -9,6 +9,7 @@ permissions:
 
 jobs:
   release-snapshot:
+    if: github.repository == 'Mishkun/ataman-intellij' && github.ref == 'refs/heads/master'
     runs-on: ubuntu-latest
     timeout-minutes: 45
     steps:

@@ -2,9 +2,9 @@ name: Build & Test
 
 on:
   push:
-    branches: [master, release/v2-rc3]
+    branches: [master, 2.x]
   pull_request:
-    branches: [master]
+    branches: [master, 2.x]
   workflow_dispatch:
 
 permissions:
@@ -25,13 +25,15 @@ jobs:
       - uses: actions/setup-python@v7
         with:
           python-version: '3.12'
-      - name: Test RC release guards
+      - name: Test release guards
         run: python -m unittest discover -s tests -p 'test_*.py'
       - uses: actions/setup-java@v6
         with:
           java-version: '21'
           distribution: temurin
           cache: gradle
+      - name: Check immutable beta publishing configuration without upload
+        run: ./gradlew help -I tests/check_beta_publishing.init.gradle "-PpublishingArchive=$GITHUB_WORKSPACE/gradle/wrapper/gradle-wrapper.jar" --no-daemon
       - name: Build, test and verify plugin
         run: ./gradlew build verifyPlugin uiTestClasses -PpluginVerificationVersions=2024.3,2026.2.3 --no-daemon
       - uses: actions/upload-artifact@v7

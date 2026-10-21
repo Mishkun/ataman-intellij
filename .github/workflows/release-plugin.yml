@@ -7,12 +7,12 @@ permissions:
   contents: read
 
 concurrency:
-  group: github-rc3-release
+  group: marketplace-release
   cancel-in-progress: false
 
 jobs:
   release:
-    if: github.repository == 'Mishkun/ataman-intellij' && github.ref == 'refs/heads/release/v2-rc3'
+    if: github.repository == 'Mishkun/ataman-intellij' && github.ref == 'refs/heads/2.x' && github.event_name == 'workflow_dispatch'
     permissions:
       contents: write
     runs-on: ubuntu-latest
@@ -27,32 +27,50 @@ jobs:
       - uses: actions/setup-python@v7
         with:
           python-version: '3.12'
-      - name: Test RC release guards
+      - name: Test beta release guards
         run: python -m unittest discover -s tests -p 'test_*.py'
-      - name: Assert candidate source and unused RC tag
-        run: python scripts/release_rc.py preflight
+      - name: Assert source, credentials presence and unused beta tag before mutations
+        env:
+          HAS_MARKETPLACE_TOKEN: ${{ secrets.JETBRAINS_MARKETPLACE_TOKEN != '' }}
+        run: python scripts/release_beta.py preflight
       - uses: actions/setup-java@v6
         with:
           java-version: '21'
           distribution: temurin
           cache: gradle
-      - name: Build, test and verify RC3 on lower and latest supported IDE
+      - name: Check immutable beta channels and frozen-only task configuration
+        run: ./gradlew help -I tests/check_beta_publishing.init.gradle "-PpublishingArchive=$GITHUB_WORKSPACE/gradle/wrapper/gradle-wrapper.jar" --no-daemon
+      - name: Build, test and verify 2.1.0 on lower and current supported IDE
         run: ./gradlew build verifyPlugin uiTestClasses -PpluginVerificationVersions=2024.3,2026.2.3 --no-daemon
       - name: Freeze and inspect tested ZIP
-        run: python scripts/release_rc.py freeze
+        run: python scripts/release_beta.py freeze
       - name: Preserve frozen ZIP and checksum
         uses: actions/upload-artifact@v7
         with:
-          name: rc3-release-archive
-          path: ${{ runner.temp }}/rc3-release/
+          name: beta-release-archive
+          path: ${{ runner.temp }}/beta-release/
           if-no-files-found: error
-      - name: Create draft, check uploaded assets, publish GitHub prerelease only
-        run: python scripts/release_rc.py publish
+      - name: Preserve immutable source tag and frozen draft assets before Marketplace
+        run: python scripts/release_beta.py draft
+      - name: Verify preserved draft, descriptor and SHA256
+        id: archive
+        run: python scripts/release_beta.py check
+      - name: Publish exactly the frozen ZIP only to Marketplace beta
+        env:
+          JETBRAINS_MARKETPLACE_TOKEN: ${{ secrets.JETBRAINS_MARKETPLACE_TOKEN }}
+          FROZEN_ZIP: ${{ steps.archive.outputs.archive }}
+        run: |
+          test -n "$JETBRAINS_MARKETPLACE_TOKEN"
+          python scripts/release_beta.py check
+          ./gradlew publishPlugin "-PpublishingArchive=$FROZEN_ZIP" --no-daemon
+          python scripts/release_beta.py check
+      - name: Publish preserved GitHub prerelease without changing latest stable
+        run: python scripts/release_beta.py finalize
       - name: Upload verification and test reports
         if: always()
         uses: actions/upload-artifact@v7
         with:
-          name: rc3-reports
+          name: beta-reports
           path: |
             build/reports/pluginVerifier/
             build/reports/tests/
@@ -60,4 +78,11 @@ jobs:
       - name: Explain safe recovery
         if: failure()
         run: |
-          echo 'RC3 failed. Existing tags/releases are never overwritten. If a draft or tag exists, inspect its source commit and assets before manual recovery; do not delete or retry blindly. No Marketplace upload or stable release is performed.' >> "$GITHUB_STEP_SUMMARY"
+          cat >> "$GITHUB_STEP_SUMMARY" <<'NOTES'
+          Beta release failed. Existing tags and releases are never overwritten or resumed automatically.
+          If v2.1.0-beta exists, this workflow refuses a rerun. Do not delete the tag, reupload blindly or bump to 2.1.1.
+          Marketplace may have accepted an upload even if the response was lost. Inspect version 2.1.0 in channel beta first.
+          If accepted, compare the preserved draft ZIP and manifest against that exact source/tag and finalize the GitHub draft manually with prerelease=true and latest=false.
+          If not accepted, verify the immutable tag, source commit, descriptor and draft asset SHA256 before a separately reviewed recovery. Keep the original ZIP; never rebuild a replacement.
+          Master and the default Marketplace channel are not part of this release.
+          NOTES
