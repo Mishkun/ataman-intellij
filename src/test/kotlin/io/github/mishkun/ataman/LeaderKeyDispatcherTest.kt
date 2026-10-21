@@ -21,12 +21,6 @@ class LeaderKeyDispatcherTest {
     }
 
     @Test
-    fun `start can be called multiple times safely`() {
-        // This would require a DataContext mock, so we just verify no exception
-        // In real usage, start() stops any existing capture first
-    }
-
-    @Test
     fun `stop can be called without start`() {
         dispatcher.stop() // Should not throw
     }
@@ -35,21 +29,6 @@ class LeaderKeyDispatcherTest {
     fun `stop can be called multiple times safely`() {
         dispatcher.stop()
         dispatcher.stop() // Should not throw
-    }
-
-    @Test
-    fun `addListener and removeListener work correctly`() {
-        var dismissed = false
-        val listener = object : LeaderStateListener {
-            override fun onBindingSelected(binding: LeaderBinding.SingleBinding) {}
-            override fun onGroupEntered(group: LeaderBinding.GroupBinding) {}
-            override fun onDismiss() { dismissed = true }
-        }
-
-        dispatcher.addListener(listener)
-        dispatcher.removeListener(listener)
-        // After removal, listener should not be called
-        // (can't easily test without starting dispatcher with mock DataContext)
     }
 
     @Test
