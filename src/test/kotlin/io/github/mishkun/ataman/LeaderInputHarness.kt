@@ -36,7 +36,14 @@ internal enum class LeaderStroke(val code: Int, val char: Char, val release: Boo
 }
 
 /** Real LeaderAction and popup navigation; only native window showing is intercepted. */
-internal class LeaderInputHarness(project: Project, functionKeyLeaf: Boolean = false) : AutoCloseable {
+internal class LeaderInputHarness(
+    private val project: Project,
+    functionKeyLeaf: Boolean = false,
+    nestedGroup: Boolean = false,
+    extraBindings: String = "",
+    private val onShow: LeaderInputHarness.(LeaderPopupUI) -> Unit = {},
+    private val onAction: LeaderInputHarness.(String, AnActionEvent) -> Unit = { _, _ -> }
+) : AutoCloseable {
     val actions = mutableListOf<String>()
     private val config = service<ConfigService>()
     private val dispatcher = service<LeaderKeyDispatcher>()
@@ -58,13 +65,16 @@ internal class LeaderInputHarness(project: Project, functionKeyLeaf: Boolean = f
             dispatcher.stop()
             folder.create()
             KeyboardFocusManager.setCurrentKeyboardFocusManager(focusManager)
-            listOf("root", "child", "sibling").forEach { name ->
+            listOf("root", "child", "sibling", "nested").forEach { name ->
                 val id = "Ataman.InputRegression.$name"
                 check(actionManager.getAction(id) == null) { "Action already registered: $id" }
                 registeredActions.add(id)
                 actionManager.registerAction(id, object : DumbAwareAction() {
                     override fun getActionUpdateThread() = ActionUpdateThread.EDT
-                    override fun actionPerformed(e: AnActionEvent) { actions.add(name) }
+                    override fun actionPerformed(e: AnActionEvent) {
+                        actions.add(name)
+                        onAction(name, e)
+                    }
                 })
             }
             UiInterceptors.registerPersistent(interceptorLifetime,
@@ -76,6 +86,7 @@ internal class LeaderInputHarness(project: Project, functionKeyLeaf: Boolean = f
                         component.list.fixedCellHeight = 24
                         component.list.fixedCellWidth = 360
                         component.list.setSize(360, 180)
+                        onShow(this@LeaderInputHarness, component)
                     }
                 })
             val f12 = if (functionKeyLeaf) """
@@ -86,24 +97,32 @@ internal class LeaderInputHarness(project: Project, functionKeyLeaf: Boolean = f
                     bindings { a { description: "Child a", actionId: "Ataman.InputRegression.child" } }
                 }
             """
+            val nested = if (nestedGroup) """
+                d {
+                    description: "Nested group"
+                    bindings { r { description: "Nested r", actionId: "Ataman.InputRegression.nested" } }
+                }
+            """ else ""
             folder.root.resolve(ATAMAN_RC_FILENAME).writeText("""
                 bindings {
                     c {
                         description: "Child group"
-                        bindings { r { description: "Child r", actionId: "Ataman.InputRegression.child" } }
+                        bindings {
+                            r { description: "Child r", actionId: "Ataman.InputRegression.child" }
+                            $nested
+                        }
                     }
                     r { description: "Root r", actionId: "Ataman.InputRegression.root" }
                     s { description: "Root sibling", actionId: "Ataman.InputRegression.sibling" }
                     $f12
+                    $extraBindings
                 }
             """.trimIndent())
             val parsed = parseConfig(folder.root, "IU").getOrThrow()
             updateConfig(project, folder.root, "IU")
             assertEquals(parsed, config.parsedBindings)
-            val action = LeaderAction()
-            action.actionPerformed(AnActionEvent.createEvent(action, SimpleDataContext.getProjectContext(project),
-                null, ActionPlaces.KEYBOARD_SHORTCUT, ActionUiKind.NONE, null))
-            check(hasOpenPopup()) { "LeaderAction did not create a popup" }
+            openLeader()
+            check(popups.isNotEmpty()) { "LeaderAction did not create a popup" }
         } catch (error: Throwable) {
             try { close() } catch (cleanup: Throwable) { error.addSuppressed(cleanup) }
             throw error
@@ -132,21 +151,49 @@ internal class LeaderInputHarness(project: Project, functionKeyLeaf: Boolean = f
         }
     }
 
-    private fun send(stroke: LeaderStroke) {
+    fun openLeader() {
+        val action = LeaderAction()
+        action.actionPerformed(AnActionEvent.createEvent(action, SimpleDataContext.getProjectContext(project),
+            null, ActionPlaces.KEYBOARD_SHORTCUT, ActionUiKind.NONE, null))
+    }
+
+    private fun send(stroke: LeaderStroke) = event(
+        if (stroke.release) KeyEvent.KEY_RELEASED else KeyEvent.KEY_PRESSED,
+        stroke.code, stroke.char, stroke.modifiers
+    )
+
+    fun event(id: Int, code: Int, char: Char, modifiers: Int = 0): Boolean {
         check(SwingUtilities.isEventDispatchThread())
-        val manager = KeyboardFocusManager.getCurrentKeyboardFocusManager() as TestFocusManager
-        val callbacks = manager.registeredDispatchers()
         val popup = activePopup()
-        if (callbacks.isEmpty() && popup == null) return
-        val source = popup?.list ?: lastList ?: return
-        val event = KeyEvent(source, if (stroke.release) KeyEvent.KEY_RELEASED else KeyEvent.KEY_PRESSED,
-            System.currentTimeMillis(), stroke.modifiers, stroke.code, stroke.char)
-        for (callback in callbacks) {
+        val source = popup?.list ?: lastList ?: return false
+        val event = KeyEvent(source, id, System.currentTimeMillis(), modifiers, code, char)
+        return dispatchCallbacks(event) || activePopup()?.dispatch(event) == true
+    }
+
+    private fun dispatchCallbacks(event: KeyEvent): Boolean {
+        val manager = KeyboardFocusManager.getCurrentKeyboardFocusManager() as TestFocusManager
+        for (callback in manager.registeredDispatchers()) {
             // A prior callback may have unregistered another callback in this snapshot.
             if (callback !in manager.registeredDispatchers()) continue
-            if (callback.dispatchKeyEvent(event) || event.isConsumed) return
+            if (callback.dispatchKeyEvent(event) || event.isConsumed) return true
         }
-        activePopup()?.dispatch(event)
+        return false
+    }
+
+    /** IdeEventQueue offers native input to its popup manager before Java dispatchers. */
+    fun popupInput(vararg strokes: LeaderStroke) {
+        strokes.forEach { stroke ->
+            popupEvent(
+                if (stroke.release) KeyEvent.KEY_RELEASED else KeyEvent.KEY_PRESSED,
+                stroke.code, stroke.char, stroke.modifiers)
+        }
+    }
+
+    fun popupEvent(id: Int, code: Int, char: Char, modifiers: Int = 0): Boolean {
+        val popup = activePopup() ?: return false
+        val event = KeyEvent(popup.list, id, System.currentTimeMillis(), modifiers, code, char)
+        // WizardPopup deliberately lets unregistered releases fall through to Java.
+        return popup.dispatch(event) || event.isConsumed || dispatchCallbacks(event)
     }
 
     fun mouseSelect(key: String) {
@@ -179,14 +226,13 @@ internal class LeaderInputHarness(project: Project, functionKeyLeaf: Boolean = f
                 if (failure == null) failure = error else failure!!.addSuppressed(error)
             }
         }
-        attempt { dispatcher.stop() }
         // Pending real navigation may create children before or during cancellation.
         attempt { drainEdt() }
+        attempt { dispatcher.stop() }
         for (pass in 1..4) {
             popups.filter { !it.isDisposed }.asReversed().forEach { popup ->
                 attempt { if (!popup.isDisposed) popup.cancel() }
                 attempt { if (!popup.isDisposed) Disposer.dispose(popup) }
-                attempt { dispatcher.removeListener(popup) }
             }
             attempt { drainEdt() }
             if (!hasOpenPopup()) break

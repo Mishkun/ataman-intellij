@@ -1,182 +1,149 @@
 package io.github.mishkun.ataman
 
-import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.components.Service
-import com.intellij.openapi.diagnostic.Logger
 import java.awt.KeyEventDispatcher
 import java.awt.KeyboardFocusManager
 import java.awt.event.KeyEvent
 import javax.swing.KeyStroke
 
-private val LOG = Logger.getInstance(LeaderKeyDispatcher::class.java)
-
-/**
- * Listener interface for LeaderKeyDispatcher state changes.
- */
-interface LeaderStateListener {
-    /** Called when a SingleBinding is matched and should be executed. */
-    fun onBindingSelected(binding: LeaderBinding.SingleBinding)
-
-    /** Called when entering a group (for nested popup creation). */
-    fun onGroupEntered(group: LeaderBinding.GroupBinding)
-
-    /** Called when the dispatcher is dismissed (escape or action complete). */
-    fun onDismiss()
-}
-
-/**
- * State machine that captures all key events and matches against bindings.
- * This is the single source of truth for key handling in the leader popup flow.
- */
+/** Captures input early; the active popup owns navigation and action execution. */
 @Service(Service.Level.APP)
 class LeaderKeyDispatcher {
-    private var isCapturing = false
-    private var keyEventDispatcher: KeyEventDispatcher? = null
-    private val listeners = mutableListOf<LeaderStateListener>()
+    class Session internal constructor(internal val focusManager: KeyboardFocusManager) {
+        internal lateinit var callback: KeyEventDispatcher
+        internal var root: LeaderPopupUI? = null
+        internal var active: LeaderPopupUI? = null
+        internal val pending = ArrayDeque<KeyEvent>()
+        internal var ready = false
+        internal var draining = false
+        internal var closing = false
+    }
 
-    private var currentBindings: List<LeaderBinding> = emptyList()
-    private var currentBindingsMap: Map<KeyStroke, LeaderBinding> = emptyMap()
-    private var currentCharMap: Map<Char, LeaderBinding> = emptyMap()
-    private var dataContext: DataContext? = null
+    private var current: Session? = null
 
-    /**
-     * Start capturing key events and matching against the provided bindings.
-     * Call this immediately when LeaderAction is invoked, before creating the popup.
-     */
-    fun start(bindings: List<LeaderBinding>, dataContext: DataContext) {
-        if (isCapturing) {
-            // Already capturing - stop first
-            stop()
+    fun start(): Session {
+        val previous = current
+        val session = Session(KeyboardFocusManager.getCurrentKeyboardFocusManager())
+        session.callback = KeyEventDispatcher { event -> capture(session, event) }
+        current = session
+        try {
+            session.focusManager.addKeyEventDispatcher(session.callback)
+            // Register first: closing the previous popup can pump events or invoke
+            // another LeaderAction. The newest token must win that reentrancy.
+            stop(previous)
+        } catch (error: Throwable) {
+            try { stop(session) } catch (cleanup: Throwable) { error.addSuppressed(cleanup) }
+            try { stop(previous) } catch (cleanup: Throwable) { error.addSuppressed(cleanup) }
+            throw error
         }
+        return session
+    }
 
-        isCapturing = true
-        currentBindings = bindings
-        currentBindingsMap = bindings.toKeyStrokeMap()
-        currentCharMap = bindings.toCharMap()
-        this.dataContext = dataContext
+    internal fun owns(session: Session) = current === session
 
-        LOG.warn("LeaderKeyDispatcher started with ${bindings.size} bindings, charMap keys: ${currentCharMap.keys}")
+    /** Shared by early Java capture and the IDE's popup-first dispatch route. */
+    internal fun capture(session: Session, event: KeyEvent): Boolean {
+        if (!owns(session)) return false
+        if (event.id !in listOf(KeyEvent.KEY_PRESSED, KeyEvent.KEY_RELEASED, KeyEvent.KEY_TYPED)) return false
+        if (event.keyCode in listOf(KeyEvent.VK_SHIFT, KeyEvent.VK_CONTROL, KeyEvent.VK_ALT, KeyEvent.VK_META)) return false
+        session.pending.addLast(KeyEvent(event.component, event.id, event.`when`, event.modifiersEx,
+            event.keyCode, event.keyChar, event.keyLocation))
+        event.consume()
+        drain(session)
+        return true
+    }
 
-        keyEventDispatcher = KeyEventDispatcher { event ->
-            if (!isCapturing) return@KeyEventDispatcher false
-            handleKeyEvent(event)
+    internal fun attach(session: Session, popup: LeaderPopupUI) {
+        if (!owns(session)) return
+        if (popup.parent == null) session.root = popup
+        session.active = popup
+    }
+
+    internal fun ready(session: Session) {
+        if (!owns(session) || session.root?.isDisposed != false) return
+        session.ready = true
+        drain(session)
+    }
+
+    /** Mouse-driven child construction can pump input just like keyboard navigation. */
+    internal fun selecting(session: Session?, selection: () -> Unit) {
+        if (session == null) return selection()
+        if (!owns(session)) return
+        if (session.draining) return selection()
+        session.draining = true
+        try {
+            selection()
+        } catch (error: Throwable) {
+            try { stop(session) } catch (cleanup: Throwable) { error.addSuppressed(cleanup) }
+            throw error
+        } finally {
+            session.draining = false
+            drain(session)
         }
-
-        KeyboardFocusManager.getCurrentKeyboardFocusManager()
-            .addKeyEventDispatcher(keyEventDispatcher)
-
-        LOG.warn("KeyEventDispatcher registered")
     }
 
-    /**
-     * Stop capturing key events and clean up.
-     */
-    fun stop() {
-        isCapturing = false
-        keyEventDispatcher?.let {
-            KeyboardFocusManager.getCurrentKeyboardFocusManager()
-                .removeKeyEventDispatcher(it)
+    /** Detach before finalRunnable can execute or a closing chain can restore a parent. */
+    internal fun finish(session: Session) {
+        if (owns(session)) current = null
+        session.closing = true
+        session.ready = false
+        session.pending.clear()
+        session.active = null
+        session.focusManager.removeKeyEventDispatcher(session.callback)
+    }
+
+    fun stop(session: Session? = current) {
+        if (session == null) return
+        finish(session)
+        try {
+            session.root?.takeUnless { it.isDisposed }?.cancel()
+        } finally {
+            session.root = null
         }
-        keyEventDispatcher = null
-        currentBindings = emptyList()
-        currentBindingsMap = emptyMap()
-        currentCharMap = emptyMap()
-        dataContext = null
     }
 
-    /**
-     * Update bindings for nested group navigation.
-     * Called when entering a sub-group to update what keys we're matching against.
-     */
-    fun updateBindings(bindings: List<LeaderBinding>) {
-        currentBindings = bindings
-        currentBindingsMap = bindings.toKeyStrokeMap()
-        currentCharMap = bindings.toCharMap()
+    internal fun closed(session: Session, popup: LeaderPopupUI) {
+        if (popup === session.root) {
+            finish(session)
+            session.root = null
+        } else if (owns(session) && session.active === popup && !session.closing) {
+            session.active = (popup.parent as? LeaderPopupUI)?.takeUnless { it.isDisposed || it.closing }
+        }
     }
 
-    fun addListener(listener: LeaderStateListener) {
-        listeners.add(listener)
-    }
-
-    fun removeListener(listener: LeaderStateListener) {
-        listeners.remove(listener)
-    }
-
-    private fun handleKeyEvent(event: KeyEvent): Boolean {
-        LOG.warn("LeaderKeyDispatcher received event: id=${event.id}, keyCode=${event.keyCode}, keyChar='${event.keyChar}', isCapturing=$isCapturing")
-
-        when (event.id) {
-            KeyEvent.KEY_PRESSED -> {
-                LOG.warn("KEY_PRESSED: keyCode=${event.keyCode}")
-                when (event.keyCode) {
-                    KeyEvent.VK_ESCAPE -> {
-                        LOG.warn("Escape pressed, dismissing")
-                        notifyDismiss()
-                        return true
-                    }
-                    // Skip modifier-only key presses
-                    KeyEvent.VK_SHIFT, KeyEvent.VK_CONTROL, KeyEvent.VK_ALT, KeyEvent.VK_META -> {
-                        return false
-                    }
-                }
-                // Consume KEY_PRESSED to prevent other handlers, but wait for KEY_RELEASED to act
-                return true
+    private fun drain(session: Session) {
+        if (!session.ready || session.draining) return
+        session.draining = true
+        try {
+            while (owns(session) && session.ready && session.pending.isNotEmpty()) {
+                handle(session, session.pending.removeFirst())
             }
-            KeyEvent.KEY_RELEASED -> {
-                LOG.warn("KEY_RELEASED: keyCode=${event.keyCode}, keyChar='${event.keyChar}'")
-                // Skip modifier-only key releases
-                when (event.keyCode) {
-                    KeyEvent.VK_SHIFT, KeyEvent.VK_CONTROL, KeyEvent.VK_ALT, KeyEvent.VK_META, KeyEvent.VK_ESCAPE -> {
-                        return false
-                    }
-                }
-                val binding = findBindingForEvent(event)
-                LOG.warn("Found binding: $binding for char '${event.keyChar}', charMap keys: ${currentCharMap.keys}")
-                if (binding != null) {
-                    processBinding(binding)
-                    return true
-                }
-                // No match - consume anyway to prevent other handlers
-                return true
-            }
-        }
-        return false
-    }
-
-    private fun findBindingForEvent(event: KeyEvent): LeaderBinding? {
-        // Match by character directly
-        currentCharMap[event.keyChar]?.let { return it }
-
-        // Also try matching by KeyStroke
-        val keyStroke = event.toKeyStroke()
-        if (keyStroke != null) {
-            currentBindingsMap[keyStroke]?.let { return it }
-        }
-
-        return null
-    }
-
-    private fun processBinding(binding: LeaderBinding) {
-        when (binding) {
-            is LeaderBinding.SingleBinding -> {
-                val ctx = dataContext
-                if (ctx != null) {
-                    binding.action.forEach { actionId ->
-                        executeAction(actionId, ctx)
-                    }
-                }
-                listeners.toList().forEach { it.onBindingSelected(binding) }
-                notifyDismiss()
-            }
-            is LeaderBinding.GroupBinding -> {
-                updateBindings(binding.bindings)
-                listeners.toList().forEach { it.onGroupEntered(binding) }
-            }
+        } catch (error: Throwable) {
+            try { stop(session) } catch (cleanup: Throwable) { error.addSuppressed(cleanup) }
+            throw error
+        } finally {
+            session.draining = false
         }
     }
 
-    private fun notifyDismiss() {
-        listeners.toList().forEach { it.onDismiss() }
+    private fun handle(session: Session, event: KeyEvent) {
+        val popup = session.active?.takeUnless { it.isDisposed } ?: return
+        if (event.id == KeyEvent.KEY_TYPED) return
+        val stroke = event.toKeyStroke() ?: return
+        val bindings = (popup.step as LeaderListStep).values
+        // Retain character-first layout handling, but honor phase and modifiers.
+        // Exact strokes cover function keys and layouts without a configured character.
+        val binding = bindings.firstOrNull {
+            it.char.length == 1 && it.char[0] == event.keyChar &&
+                it.key.isOnKeyRelease == stroke.isOnKeyRelease && it.key.modifiers == stroke.modifiers
+        } ?: bindings.firstOrNull { it.key == stroke }
+        if (binding != null) {
+            popup.list.setSelectedValue(binding, true)
+            popup.handleSelect(true)
+        } else {
+            // Configured bindings override native commands, as in the original popup.
+            popup.replayCommand(event)
+        }
     }
 }
 

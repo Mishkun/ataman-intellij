@@ -70,7 +70,7 @@ class LeaderInputHarnessCleanupTest : LightPlatform4TestCase() {
         assertSame(focus, KeyboardFocusManager.getCurrentKeyboardFocusManager())
         assertEquals(bindings, config.parsedBindings)
         assertEquals(command, config.latestCommand)
-        listOf("root", "child", "sibling").forEach {
+        listOf("root", "child", "sibling", "nested").forEach {
             assertNull(ActionManager.getInstance().getAction("Ataman.InputRegression.$it"))
         }
     }
