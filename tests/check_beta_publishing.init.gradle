@@ -1,0 +1,21 @@
+// Run with `help -I tests/check_beta_publishing.init.gradle` and an absolute
+// -PpublishingArchive pointing to any existing fixture. No publishing task runs.
+gradle.projectsEvaluated {
+    def project = gradle.rootProject
+    def publish = project.tasks.named('publishPlugin').get()
+    def expected = new File(project.providers.gradleProperty('publishingArchive').get())
+    assert expected.isAbsolute() && expected.isFile()
+    assert publish.archiveFiles.files == ([expected] as Set)
+    assert publish.taskDependencies.getDependencies(publish).empty
+    assert publish.channels.get() == ['beta']
+    for (channels in [[], [''], ['default'], ['beta', 'default']]) {
+        boolean blocked = false
+        try {
+            publish.channels.set(channels)
+        } catch (IllegalStateException ignored) {
+            blocked = true
+        }
+        assert blocked : 'Publishing channels must reject changes and default fallback'
+    }
+    println 'Verified frozen archive selection, no build dependencies and immutable beta-only channels.'
+}

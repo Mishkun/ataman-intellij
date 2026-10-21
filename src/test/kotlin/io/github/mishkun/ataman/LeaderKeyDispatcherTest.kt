@@ -7,9 +7,13 @@ import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 import java.awt.Component
+import java.awt.DefaultKeyboardFocusManager
+import java.awt.KeyEventDispatcher
+import java.awt.KeyboardFocusManager
 import java.awt.event.KeyEvent
 import javax.swing.JPanel
 import javax.swing.KeyStroke
+import javax.swing.SwingUtilities
 
 class LeaderKeyDispatcherTest {
 
@@ -18,12 +22,6 @@ class LeaderKeyDispatcherTest {
     @Before
     fun setUp() {
         dispatcher = LeaderKeyDispatcher()
-    }
-
-    @Test
-    fun `start can be called multiple times safely`() {
-        // This would require a DataContext mock, so we just verify no exception
-        // In real usage, start() stops any existing capture first
     }
 
     @Test
@@ -38,30 +36,27 @@ class LeaderKeyDispatcherTest {
     }
 
     @Test
-    fun `addListener and removeListener work correctly`() {
-        var dismissed = false
-        val listener = object : LeaderStateListener {
-            override fun onBindingSelected(binding: LeaderBinding.SingleBinding) {}
-            override fun onGroupEntered(group: LeaderBinding.GroupBinding) {}
-            override fun onDismiss() { dismissed = true }
+    fun `session unregisters from the manager that registered it`() = SwingUtilities.invokeAndWait {
+        class FocusManager : DefaultKeyboardFocusManager() {
+            fun registrations(): List<KeyEventDispatcher> = keyEventDispatchers.orEmpty()
         }
-
-        dispatcher.addListener(listener)
-        dispatcher.removeListener(listener)
-        // After removal, listener should not be called
-        // (can't easily test without starting dispatcher with mock DataContext)
+        val original = KeyboardFocusManager.getCurrentKeyboardFocusManager()
+        val first = FocusManager()
+        val second = FocusManager()
+        try {
+            KeyboardFocusManager.setCurrentKeyboardFocusManager(first)
+            val session = dispatcher.start()
+            assertFalse(first.registrations().isEmpty())
+            KeyboardFocusManager.setCurrentKeyboardFocusManager(second)
+            dispatcher.stop(session)
+            assertTrue(first.registrations().isEmpty())
+            assertTrue(second.registrations().isEmpty())
+        } finally {
+            dispatcher.stop()
+            KeyboardFocusManager.setCurrentKeyboardFocusManager(original)
+        }
     }
 
-    @Test
-    fun `removeListener is safe when listener not present`() {
-        val listener = object : LeaderStateListener {
-            override fun onBindingSelected(binding: LeaderBinding.SingleBinding) {}
-            override fun onGroupEntered(group: LeaderBinding.GroupBinding) {}
-            override fun onDismiss() {}
-        }
-
-        dispatcher.removeListener(listener) // Should not throw
-    }
 }
 
 class KeyEventToKeyStrokeTest {

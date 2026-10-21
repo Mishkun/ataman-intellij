@@ -2,6 +2,7 @@ import org.jetbrains.intellij.platform.gradle.IntelliJPlatformType
 import org.jetbrains.intellij.platform.gradle.TestFrameworkType
 import org.jetbrains.intellij.platform.gradle.models.ProductRelease
 import org.jetbrains.intellij.platform.gradle.tasks.VerifyPluginTask
+import java.io.File
 
 plugins {
     kotlin("jvm") version "2.0.20"
@@ -79,7 +80,7 @@ repositories {
 }
 
 group = "io.github.mishkun"
-version = "2.0.0-rc3"
+version = "2.1.0"
 
 intellijPlatform {
     instrumentCode.set(false)
@@ -91,6 +92,11 @@ intellijPlatform {
             sinceBuild = "243"
             untilBuild = "262.*"
         }
+    }
+    publishing {
+        token = providers.environmentVariable("JETBRAINS_MARKETPLACE_TOKEN")
+        channels.set(listOf("beta"))
+        channels.disallowChanges()
     }
     pluginVerification {
         // Keep API warnings visible; compatibility errors block the release.
@@ -141,4 +147,29 @@ dependencies {
 
 tasks.verifyPlugin {
     dependsOn(tasks.buildPlugin)
+}
+
+// Publishing must never fall back to a newly built ZIP or the default channel.
+val publishingArchive = layout.file(providers.gradleProperty("publishingArchive").map { path ->
+    File(path).also {
+        require(it.isAbsolute && it.isFile) { "publishingArchive must be an existing absolute file" }
+    }
+})
+
+tasks.publishPlugin {
+    // The plugin otherwise adds explicit buildPlugin/signPlugin dependencies,
+    // even when archiveFiles is overridden with a frozen external ZIP.
+    setDependsOn(emptyList<Any>())
+    archiveFiles.setFrom(publishingArchive)
+    archiveFiles.disallowChanges()
+    channels.set(intellijPlatform.publishing.channels)
+    channels.disallowChanges()
+    doFirst {
+        require(channels.get() == listOf("beta")) { "Only beta publication is allowed" }
+        require(!providers.environmentVariable("JETBRAINS_MARKETPLACE_TOKEN").orNull.isNullOrBlank()) {
+            "JETBRAINS_MARKETPLACE_TOKEN is required"
+        }
+        require(publishingArchive.isPresent) { "The frozen publishingArchive is required" }
+        require(archiveFiles.files == setOf(publishingArchive.get().asFile)) { "Only the frozen ZIP may be published" }
+    }
 }

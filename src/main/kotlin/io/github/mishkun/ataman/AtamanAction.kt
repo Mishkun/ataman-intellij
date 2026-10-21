@@ -9,8 +9,6 @@ import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.DumbAwareAction
-import com.intellij.openapi.ui.popup.JBPopupListener
-import com.intellij.openapi.ui.popup.LightweightWindowEvent
 import com.intellij.ui.speedSearch.SpeedSearchSupply
 import java.awt.KeyboardFocusManager
 import javax.swing.JComponent
@@ -59,32 +57,26 @@ class LeaderAction : DumbAwareAction() {
         val dispatcher = service<LeaderKeyDispatcher>()
         val bindings = service<ConfigService>().parsedBindings
 
-        // Start key capture FIRST, before any UI work
-        dispatcher.start(bindings, event.dataContext)
-
-        // Create display-only popup
-        val popup = LeaderPopupUI(
-            event.project,
-            LeaderListStep(
-                "Ataman",
-                event.dataContext,
-                values = bindings
+        val session = dispatcher.start()
+        if (!dispatcher.owns(session)) return
+        var popup: LeaderPopupUI? = null
+        try {
+            popup = LeaderPopupUI(
+                event.project,
+                LeaderListStep("Ataman", event.dataContext, bindings, session),
+                session = session
             )
-        )
-
-        // Wire up lifecycle: popup close -> stop dispatcher
-        popup.addListener(object : JBPopupListener {
-            override fun onClosed(event: LightweightWindowEvent) {
-                dispatcher.stop()
+            if (!dispatcher.owns(session)) {
+                popup.cancel()
+                return
             }
-        })
-
-        // Show popup
-        val project = event.project
-        if (project != null) {
-            popup.showCenteredInCurrentWindow(project)
-        } else {
-            popup.showInFocusCenter()
+            val project = event.project
+            if (project != null) popup.showCenteredInCurrentWindow(project) else popup.showInFocusCenter()
+            dispatcher.ready(session)
+        } catch (error: Throwable) {
+            try { dispatcher.stop(session) } catch (cleanup: Throwable) { error.addSuppressed(cleanup) }
+            try { popup?.takeUnless { it.isDisposed }?.cancel() } catch (cleanup: Throwable) { error.addSuppressed(cleanup) }
+            throw error
         }
     }
 }

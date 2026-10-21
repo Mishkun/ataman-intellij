@@ -1,4 +1,4 @@
-"""One guarded GitHub-only RC3 release. Existing tags/releases fail closed."""
+"""One guarded 2.1.0 beta release. Existing tags/releases fail closed."""
 
 import hashlib
 import io
@@ -14,9 +14,10 @@ import zipfile
 
 
 REPOSITORY = "Mishkun/ataman-intellij"
-REF = "refs/heads/release/v2-rc3"
-VERSION = "2.0.0-rc3"
-TAG = f"v{VERSION}"
+REF = "refs/heads/2.x"
+VERSION = "2.1.0"
+CHANNEL = "beta"
+TAG = f"v{VERSION}-{CHANNEL}"
 PLUGIN_ID = "io.github.mishkun.ataman-plugin"
 ARCHIVE = f"ataman-plugin-{VERSION}.zip"
 MANIFEST = "release-manifest.json"
@@ -33,9 +34,7 @@ def context():
         or os.environ.get("GITHUB_REF") != REF
         or os.environ.get("GITHUB_EVENT_NAME") != "workflow_dispatch"
     ):
-        raise ValueError(
-            "RC3 requires manual dispatch on the canonical candidate branch"
-        )
+        raise ValueError("Beta requires manual dispatch on canonical 2.x")
     commit = run("git", "rev-parse", "HEAD")
     if not re.fullmatch(r"[0-9a-f]{40}", commit) or commit != os.environ.get(
         "GITHUB_SHA"
@@ -48,7 +47,7 @@ def context():
         r'^version = "([^"]+)"$', Path("build.gradle.kts").read_text(), re.M
     )
     if versions != [VERSION]:
-        raise ValueError("Expected the exact literal RC3 project version")
+        raise ValueError("Expected the exact literal 2.1.0 project version")
     return commit
 
 
@@ -68,7 +67,7 @@ def release_info():
         if result.stderr.strip() == "release not found":
             return None
         raise RuntimeError(
-            f"Cannot inspect existing RC release: {result.stderr.strip()}"
+            f"Cannot inspect existing beta release: {result.stderr.strip()}"
         )
     return json.loads(result.stdout)
 
@@ -82,12 +81,15 @@ def remote_tag():
 def ensure_unused():
     if remote_tag() or release_info() is not None:
         raise ValueError(
-            "RC3 tag/release already exists; refusing to overwrite or resume automatically"
+            "Beta tag/release already exists; stop and inspect Marketplace and draft assets manually. "
+            "Never overwrite the tag, reupload blindly, or bump the version on retry."
         )
 
 
 def preflight():
     context()
+    if os.environ.get("HAS_MARKETPLACE_TOKEN") != "true":
+        raise ValueError("Missing repository secret JETBRAINS_MARKETPLACE_TOKEN")
     ensure_unused()
 
 
@@ -112,7 +114,7 @@ def descriptor(data):
         or bounds.get("since-build") != "243"
         or bounds.get("until-build") != "262.*"
     ):
-        raise ValueError("Distribution descriptor must be RC3 with bounds 243..262.*")
+        raise ValueError("Distribution descriptor must be 2.1.0 with bounds 243..262.*")
     return {
         "id": PLUGIN_ID,
         "version": VERSION,
@@ -127,19 +129,20 @@ def metadata(data, commit):
         "sha256": hashlib.sha256(data).hexdigest(),
         "tag": TAG,
         "commit": commit,
+        "channel": CHANNEL,
         **descriptor(data),
     }
 
 
 def directory():
-    return Path(os.environ["RUNNER_TEMP"]) / "rc3-release"
+    return Path(os.environ["RUNNER_TEMP"]) / "beta-release"
 
 
 def freeze():
     commit = context()
     archives = list(Path("build/distributions").glob("*.zip"))
     if len(archives) != 1 or archives[0].name != ARCHIVE:
-        raise ValueError("Expected exactly the tested RC3 distribution ZIP")
+        raise ValueError("Expected exactly the tested 2.1.0 distribution ZIP")
     data = archives[0].read_bytes()
     manifest = metadata(data, commit)
     destination = directory()
@@ -169,27 +172,40 @@ def check_release(release, commit, draft):
         != sorted([ARCHIVE, MANIFEST])
     ):
         raise ValueError(
-            "Unexpected release identity/state/assets; refusing publication"
+            "Unexpected beta release identity/state/assets; refusing publication"
         )
 
 
 def check_tag(commit, required=False):
     refs = remote_tag().splitlines()
     if not refs and required:
-        raise ValueError("Published RC tag is missing")
+        raise ValueError("Preserved beta tag is missing")
     if refs:
         peeled = [line.split()[0] for line in refs if line.endswith("^{}")]
         target = peeled[0] if peeled else refs[0].split()[0]
         if target != commit:
-            raise ValueError("RC tag does not point to the tested source commit")
+            raise ValueError("Beta tag does not point to the tested source commit")
 
 
-def publish():
+def draft():
     commit = context()
     frozen = directory()
     check_frozen(frozen, commit)
     ensure_unused()
-    # No source commit or tag push. GitHub creates the release tag at this exact SHA.
+    # Create an immutable lightweight tag at the exact dispatched, merged SHA.
+    # The create-only API fails if another process has already claimed this ref.
+    run(
+        "gh",
+        "api",
+        "--method",
+        "POST",
+        f"repos/{REPOSITORY}/git/refs",
+        "-f",
+        f"ref=refs/tags/{TAG}",
+        "-f",
+        f"sha={commit}",
+    )
+    check_tag(commit, required=True)
     run(
         "gh",
         "release",
@@ -199,19 +215,28 @@ def publish():
         REPOSITORY,
         "--target",
         commit,
+        "--verify-tag",
         "--title",
-        f"Ataman {VERSION}",
+        f"Ataman {VERSION} beta",
         "--notes",
-        "RC3 of the v2 keyboard dispatcher rewrite. GitHub prerelease only; not published to Marketplace.",
+        "Ataman v2 keyboard dispatcher fixes. JetBrains Marketplace beta channel; stable 1.x is unchanged.",
         "--draft",
         "--prerelease",
         "--latest=false",
         str(frozen / ARCHIVE),
         str(frozen / MANIFEST),
     )
+    check()
+
+
+def check():
+    commit = context()
+    frozen = directory()
+    check_frozen(frozen, commit)
+    check_tag(commit, required=True)
     check_release(release_info(), commit, draft=True)
     with tempfile.TemporaryDirectory(
-        prefix="rc3-download-", dir=os.environ["RUNNER_TEMP"]
+        prefix="beta-download-", dir=os.environ["RUNNER_TEMP"]
     ) as downloaded:
         run("gh", "release", "download", TAG, "--repo", REPOSITORY, "--dir", downloaded)
         downloaded = Path(downloaded)
@@ -220,7 +245,16 @@ def publish():
             if (downloaded / name).read_bytes() != (frozen / name).read_bytes():
                 raise ValueError("Uploaded assets differ from frozen tested assets")
     check_frozen(frozen, commit)
-    check_tag(commit)
+    if os.environ.get("GITHUB_OUTPUT"):
+        with open(os.environ["GITHUB_OUTPUT"], "a") as output:
+            output.write(f"archive={(frozen / ARCHIVE).resolve()}\n")
+
+
+def finalize():
+    # The workflow invokes this only after successful Marketplace upload and a
+    # second frozen checksum check. No automatic recovery can reach this stage.
+    check()
+    commit = context()
     run(
         "gh",
         "release",
@@ -237,7 +271,13 @@ def publish():
 
 
 if __name__ == "__main__":
-    commands = {"preflight": preflight, "freeze": freeze, "publish": publish}
+    commands = {
+        "preflight": preflight,
+        "freeze": freeze,
+        "draft": draft,
+        "check": check,
+        "finalize": finalize,
+    }
     if len(sys.argv) != 2 or sys.argv[1] not in commands:
-        sys.exit("Usage: release_rc.py preflight|freeze|publish")
+        sys.exit("Usage: release_beta.py preflight|freeze|draft|check|finalize")
     commands[sys.argv[1]]()
