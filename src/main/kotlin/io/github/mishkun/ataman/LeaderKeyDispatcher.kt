@@ -9,11 +9,18 @@ import javax.swing.KeyStroke
 /** Captures input early; the active popup owns navigation and action execution. */
 @Service(Service.Level.APP)
 class LeaderKeyDispatcher {
+    internal data class NavigationKey(val code: Int, val location: Int) {
+        fun matches(event: KeyEvent): Boolean = code == event.keyCode &&
+            (location == event.keyLocation || location == KeyEvent.KEY_LOCATION_UNKNOWN ||
+                event.keyLocation == KeyEvent.KEY_LOCATION_UNKNOWN)
+    }
+
     class Session internal constructor(internal val focusManager: KeyboardFocusManager) {
         internal lateinit var callback: KeyEventDispatcher
         internal var root: LeaderPopupUI? = null
         internal var active: LeaderPopupUI? = null
         internal val pending = ArrayDeque<KeyEvent>()
+        internal val navigationKeys = mutableSetOf<NavigationKey>()
         internal var ready = false
         internal var draining = false
         internal var closing = false
@@ -88,6 +95,7 @@ class LeaderKeyDispatcher {
         session.closing = true
         session.ready = false
         session.pending.clear()
+        session.navigationKeys.clear()
         session.active = null
         session.focusManager.removeKeyEventDispatcher(session.callback)
     }
@@ -127,6 +135,15 @@ class LeaderKeyDispatcher {
     }
 
     private fun handle(session: Session, event: KeyEvent) {
+        if (event.id == KeyEvent.KEY_PRESSED || event.id == KeyEvent.KEY_RELEASED) {
+            // A registered command wrapper loses location. Allow UNKNOWN on either
+            // side, but never merge two different known locations (e.g. NUMPAD).
+            val held = session.navigationKeys.firstOrNull { it.matches(event) }
+            if (held != null) {
+                if (event.id == KeyEvent.KEY_RELEASED) session.navigationKeys.remove(held)
+                return // Repeat/down and the matching release belong to navigation.
+            }
+        }
         val popup = session.active?.takeUnless { it.isDisposed } ?: return
         if (event.id == KeyEvent.KEY_TYPED) return
         val stroke = event.toKeyStroke() ?: return
@@ -138,6 +155,9 @@ class LeaderKeyDispatcher {
                 it.key.isOnKeyRelease == stroke.isOnKeyRelease && it.key.modifiers == stroke.modifiers
         } ?: bindings.firstOrNull { it.key == stroke }
         if (binding != null) {
+            if (event.id == KeyEvent.KEY_PRESSED && binding is LeaderBinding.GroupBinding) {
+                session.navigationKeys.add(NavigationKey(event.keyCode, event.keyLocation))
+            }
             popup.list.setSelectedValue(binding, true)
             popup.handleSelect(true)
         } else {

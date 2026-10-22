@@ -42,16 +42,16 @@ def release(draft=True):
 
 class ReleaseBetaTest(unittest.TestCase):
     def test_descriptor_accepts_exact_beta_version(self):
-        self.assertEqual(rc.descriptor(archive())["version"], "2.1.0")
-        self.assertEqual(rc.TAG, "v2.1.0-beta")
+        self.assertEqual(rc.descriptor(archive())["version"], "2.1.1")
+        self.assertEqual(rc.TAG, "v2.1.1-beta")
         self.assertEqual(rc.CHANNEL, "beta")
 
     def test_descriptor_rejects_other_versions_old_bounds_and_wrong_plugin(self):
         for kwargs in (
             {"version": "2.0.0"},
             {"version": "2.0.0-rc2"},
-            {"version": "2.1.0-beta"},
-            {"version": "2.1.1"},
+            {"version": "2.1.1-beta"},
+            {"version": "2.1.0"},
             {"until": "261.*"},
             {"since": "242"},
             {"plugin_id": "other"},
@@ -77,7 +77,7 @@ class ReleaseBetaTest(unittest.TestCase):
             ("GITHUB_REPOSITORY", "fork/repo"),
             ("GITHUB_REF", "refs/heads/master"),
             ("GITHUB_REF", "refs/heads/release/v2-rc3"),
-            ("GITHUB_REF", "refs/tags/v2.1.0-beta"),
+            ("GITHUB_REF", "refs/tags/v2.1.1-beta"),
             ("GITHUB_EVENT_NAME", "push"),
         ):
             with (
@@ -338,8 +338,8 @@ class ReleaseBetaTest(unittest.TestCase):
                 {"channel": "default"},
                 {"channel": ""},
                 {"channel": None},
-                {"tag": "v2.1.0"},
-                {"version": "2.1.1"},
+                {"tag": "v2.1.1"},
+                {"version": "2.1.0"},
                 {"sha256": "0" * 64},
                 {"commit": "b" * 40},
             ):
