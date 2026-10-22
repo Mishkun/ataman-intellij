@@ -29,6 +29,7 @@ internal enum class LeaderStroke(val code: Int, val char: Char, val release: Boo
     R_DOWN(KeyEvent.VK_R, 'r'), R_UP(KeyEvent.VK_R, 'r', true),
     S_DOWN(KeyEvent.VK_S, 's'), S_UP(KeyEvent.VK_S, 's', true),
     A_DOWN(KeyEvent.VK_A, 'a'), A_UP(KeyEvent.VK_A, 'a', true),
+    F_DOWN(KeyEvent.VK_F, 'f'), F_UP(KeyEvent.VK_F, 'f', true),
     F12_DOWN(KeyEvent.VK_F12, KeyEvent.CHAR_UNDEFINED), F12_UP(KeyEvent.VK_F12, KeyEvent.CHAR_UNDEFINED, true),
     ESC_DOWN(KeyEvent.VK_ESCAPE, KeyEvent.CHAR_UNDEFINED), ESC_UP(KeyEvent.VK_ESCAPE, KeyEvent.CHAR_UNDEFINED, true),
     SHIFT_ESC_DOWN(KeyEvent.VK_ESCAPE, KeyEvent.CHAR_UNDEFINED, modifiers = KeyEvent.SHIFT_DOWN_MASK),
@@ -40,6 +41,7 @@ internal class LeaderInputHarness(
     private val project: Project,
     functionKeyLeaf: Boolean = false,
     nestedGroup: Boolean = false,
+    sameKeyGroup: Boolean = false,
     extraBindings: String = "",
     private val onShow: LeaderInputHarness.(LeaderPopupUI) -> Unit = {},
     private val onAction: LeaderInputHarness.(String, AnActionEvent) -> Unit = { _, _ -> }
@@ -103,6 +105,12 @@ internal class LeaderInputHarness(
                     bindings { r { description: "Nested r", actionId: "Ataman.InputRegression.nested" } }
                 }
             """ else ""
+            val sameKey = if (sameKeyGroup) """
+                f {
+                    description: "Find group"
+                    bindings { f { description: "Find child", actionId: "Ataman.InputRegression.child" } }
+                }
+            """ else ""
             folder.root.resolve(ATAMAN_RC_FILENAME).writeText("""
                 bindings {
                     c {
@@ -115,6 +123,7 @@ internal class LeaderInputHarness(
                     r { description: "Root r", actionId: "Ataman.InputRegression.root" }
                     s { description: "Root sibling", actionId: "Ataman.InputRegression.sibling" }
                     $f12
+                    $sameKey
                     $extraBindings
                 }
             """.trimIndent())
@@ -162,11 +171,11 @@ internal class LeaderInputHarness(
         stroke.code, stroke.char, stroke.modifiers
     )
 
-    fun event(id: Int, code: Int, char: Char, modifiers: Int = 0): Boolean {
+    fun event(id: Int, code: Int, char: Char, modifiers: Int = 0, location: Int = KeyEvent.KEY_LOCATION_UNKNOWN): Boolean {
         check(SwingUtilities.isEventDispatchThread())
         val popup = activePopup()
         val source = popup?.list ?: lastList ?: return false
-        val event = KeyEvent(source, id, System.currentTimeMillis(), modifiers, code, char)
+        val event = KeyEvent(source, id, System.currentTimeMillis(), modifiers, code, char, location)
         return dispatchCallbacks(event) || activePopup()?.dispatch(event) == true
     }
 
@@ -189,9 +198,9 @@ internal class LeaderInputHarness(
         }
     }
 
-    fun popupEvent(id: Int, code: Int, char: Char, modifiers: Int = 0): Boolean {
+    fun popupEvent(id: Int, code: Int, char: Char, modifiers: Int = 0, location: Int = KeyEvent.KEY_LOCATION_UNKNOWN): Boolean {
         val popup = activePopup() ?: return false
-        val event = KeyEvent(popup.list, id, System.currentTimeMillis(), modifiers, code, char)
+        val event = KeyEvent(popup.list, id, System.currentTimeMillis(), modifiers, code, char, location)
         // WizardPopup deliberately lets unregistered releases fall through to Java.
         return popup.dispatch(event) || event.isConsumed || dispatchCallbacks(event)
     }

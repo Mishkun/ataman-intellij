@@ -10,6 +10,121 @@ import java.awt.event.KeyEvent
 
 class LeaderSessionTest : LightPlatform4TestCase() {
     @Test
+    fun `held f autorepeat does not enter a second group but a fresh press does`() {
+        LeaderInputHarness(project, extraBindings = """
+            f {
+                description: "First f group"
+                bindings {
+                    r { description: "Parent r", actionId: "Ataman.InputRegression.child" }
+                    f {
+                        description: "Second f group"
+                        bindings { r { description: "Nested r", actionId: "Ataman.InputRegression.nested" } }
+                    }
+                }
+            }
+        """).use { h ->
+            h.popupInput(F_DOWN, F_DOWN, F_DOWN, F_UP, R_DOWN, R_UP)
+            h.drainEdt()
+            assertEquals("Repeat key-down must not leave the first group", listOf("child"), h.actions)
+            assertFalse(h.hasOpenPopup())
+
+            h.openLeader()
+            h.popupInput(F_DOWN, F_UP, F_DOWN, F_UP, R_DOWN, R_UP)
+            h.drainEdt()
+            assertEquals("Fresh second press must enter the nested group", listOf("child", "nested"), h.actions)
+            assertFalse(h.hasOpenPopup())
+        }
+    }
+
+    @Test
+    fun `navigation release clears held key despite changed character and modifiers`() {
+        LeaderInputHarness(project, sameKeyGroup = true).use { h ->
+            h.event(KeyEvent.KEY_PRESSED, KeyEvent.VK_F, 'f', location = KeyEvent.KEY_LOCATION_STANDARD)
+            h.event(KeyEvent.KEY_RELEASED, KeyEvent.VK_F, 'F', KeyEvent.SHIFT_DOWN_MASK, KeyEvent.KEY_LOCATION_STANDARD)
+            h.drainEdt()
+            assertTrue(h.actions.isEmpty())
+            assertTrue(h.hasOpenPopup())
+
+            h.event(KeyEvent.KEY_PRESSED, KeyEvent.VK_F, 'f', location = KeyEvent.KEY_LOCATION_STANDARD)
+            h.event(KeyEvent.KEY_RELEASED, KeyEvent.VK_F, 'f', location = KeyEvent.KEY_LOCATION_STANDARD)
+            h.drainEdt()
+            assertEquals(listOf("child"), h.actions)
+            assertFalse(h.hasOpenPopup())
+        }
+    }
+
+    @Test
+    fun `navigation Enter matches unknown wrapper location and reset keeps known locations distinct`() {
+        var root: LeaderPopupUI? = null
+        LeaderInputHarness(project, extraBindings = """
+            "\n" {
+                description: "Enter group"
+                bindings { "\n" { description: "Enter child", actionId: "Ataman.InputRegression.child" } }
+            }
+        """, onShow = { popup -> if (popup.parent == null) root = popup }).use { h ->
+            fun popupEnter(release: Boolean) = h.popupEvent(
+                if (release) KeyEvent.KEY_RELEASED else KeyEvent.KEY_PRESSED,
+                KeyEvent.VK_ENTER, '\n', location = KeyEvent.KEY_LOCATION_STANDARD)
+
+            // The registered command wrapper synthesizes UNKNOWN for the key-down.
+            popupEnter(false)
+            popupEnter(true)
+            h.drainEdt()
+            assertTrue("STANDARD release must consume the UNKNOWN navigation press", h.actions.isEmpty())
+            assertTrue(h.hasOpenPopup())
+            popupEnter(false)
+            popupEnter(true)
+            h.drainEdt()
+            assertEquals(listOf("child"), h.actions)
+            assertFalse(h.hasOpenPopup())
+
+            h.openLeader()
+            popupEnter(false)
+            root!!.cancel() // Cancel with an UNKNOWN navigation key still held.
+            h.openLeader()
+            h.event(KeyEvent.KEY_PRESSED, KeyEvent.VK_ENTER, '\n', location = KeyEvent.KEY_LOCATION_STANDARD)
+            h.event(KeyEvent.KEY_PRESSED, KeyEvent.VK_ENTER, '\n', location = KeyEvent.KEY_LOCATION_NUMPAD)
+            h.event(KeyEvent.KEY_RELEASED, KeyEvent.VK_ENTER, '\n', location = KeyEvent.KEY_LOCATION_NUMPAD)
+            h.drainEdt()
+            assertEquals("New session must accept a distinct NUMPAD Enter while STANDARD is held",
+                listOf("child", "child"), h.actions)
+            h.event(KeyEvent.KEY_RELEASED, KeyEvent.VK_ENTER, '\n', location = KeyEvent.KEY_LOCATION_STANDARD)
+            h.drainEdt()
+            assertEquals(listOf("child", "child"), h.actions)
+            assertFalse(h.hasOpenPopup())
+        }
+    }
+
+    @Test
+    fun `same physical f press only enters group with focus-manager dispatch`() =
+        assertTwoPhysicalFPresses(popupFirst = false)
+
+    @Test
+    fun `same physical f press only enters group with popup-first dispatch`() =
+        assertTwoPhysicalFPresses(popupFirst = true)
+
+    private fun assertTwoPhysicalFPresses(popupFirst: Boolean) {
+        LeaderInputHarness(project, sameKeyGroup = true).use { h ->
+            fun pressF() {
+                if (popupFirst) h.popupInput(F_DOWN, F_UP) else h.input(F_DOWN, F_UP)
+                h.drainEdt()
+            }
+            pressF()
+            val actionsAfterFirst = h.actions.toList()
+            val groupOpenAfterFirst = h.hasOpenPopup()
+            pressF()
+
+            println("SAME_KEY popupFirst=$popupFirst actionsAfterFirst=$actionsAfterFirst " +
+                "groupOpenAfterFirst=$groupOpenAfterFirst actionsAfterSecond=${h.actions} " +
+                "popupOpenAfterSecond=${h.hasOpenPopup()}")
+            assertEquals("First physical f press must only enter the group", emptyList<String>(), actionsAfterFirst)
+            assertTrue("The group must remain open after the first release", groupOpenAfterFirst)
+            assertEquals("Second physical f press must execute the child exactly once", listOf("child"), h.actions)
+            assertFalse("Child execution must close the popup chain", h.hasOpenPopup())
+        }
+    }
+
+    @Test
     fun `configured Enter group overrides native selection`() {
         LeaderInputHarness(project, extraBindings = """
             "\n" {
