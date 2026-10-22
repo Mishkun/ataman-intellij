@@ -1,4 +1,4 @@
-"""One guarded 2.1.0 beta release. Existing tags/releases fail closed."""
+"""One guarded 2.1.1 beta release. Existing tags/releases fail closed."""
 
 import hashlib
 import io
@@ -15,7 +15,7 @@ import zipfile
 
 REPOSITORY = "Mishkun/ataman-intellij"
 REF = "refs/heads/2.x"
-VERSION = "2.1.0"
+VERSION = "2.1.1"
 CHANNEL = "beta"
 TAG = f"v{VERSION}-{CHANNEL}"
 PLUGIN_ID = "io.github.mishkun.ataman-plugin"
@@ -47,7 +47,7 @@ def context():
         r'^version = "([^"]+)"$', Path("build.gradle.kts").read_text(), re.M
     )
     if versions != [VERSION]:
-        raise ValueError("Expected the exact literal 2.1.0 project version")
+        raise ValueError("Expected the exact literal 2.1.1 project version")
     return commit
 
 
@@ -114,7 +114,7 @@ def descriptor(data):
         or bounds.get("since-build") != "243"
         or bounds.get("until-build") != "262.*"
     ):
-        raise ValueError("Distribution descriptor must be 2.1.0 with bounds 243..262.*")
+        raise ValueError("Distribution descriptor must be 2.1.1 with bounds 243..262.*")
     return {
         "id": PLUGIN_ID,
         "version": VERSION,
@@ -142,7 +142,7 @@ def freeze():
     commit = context()
     archives = list(Path("build/distributions").glob("*.zip"))
     if len(archives) != 1 or archives[0].name != ARCHIVE:
-        raise ValueError("Expected exactly the tested 2.1.0 distribution ZIP")
+        raise ValueError("Expected exactly the tested 2.1.1 distribution ZIP")
     data = archives[0].read_bytes()
     manifest = metadata(data, commit)
     destination = directory()

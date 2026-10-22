@@ -40,7 +40,7 @@ jobs:
           cache: gradle
       - name: Check immutable beta channels and frozen-only task configuration
         run: ./gradlew help -I tests/check_beta_publishing.init.gradle "-PpublishingArchive=$GITHUB_WORKSPACE/gradle/wrapper/gradle-wrapper.jar" --no-daemon
-      - name: Build, test and verify 2.1.0 on lower and current supported IDE
+      - name: Build, test and verify 2.1.1 on lower and current supported IDE
         run: ./gradlew build verifyPlugin uiTestClasses -PpluginVerificationVersions=2024.3,2026.2.3 --no-daemon
       - name: Freeze and inspect tested ZIP
         run: python scripts/release_beta.py freeze
@@ -80,8 +80,8 @@ jobs:
         run: |
           cat >> "$GITHUB_STEP_SUMMARY" <<'NOTES'
           Beta release failed. Existing tags and releases are never overwritten or resumed automatically.
-          If v2.1.0-beta exists, this workflow refuses a rerun. Do not delete the tag, reupload blindly or bump to 2.1.1.
-          Marketplace may have accepted an upload even if the response was lost. Inspect version 2.1.0 in channel beta first.
+          If v2.1.1-beta exists, this workflow refuses a rerun. Do not delete the tag, reupload blindly or bump to 2.1.2.
+          Marketplace may have accepted an upload even if the response was lost. Inspect version 2.1.1 in channel beta first.
           If accepted, compare the preserved draft ZIP and manifest against that exact source/tag and finalize the GitHub draft manually with prerelease=true and latest=false.
           If not accepted, verify the immutable tag, source commit, descriptor and draft asset SHA256 before a separately reviewed recovery. Keep the original ZIP; never rebuild a replacement.
           Master and the default Marketplace channel are not part of this release.
