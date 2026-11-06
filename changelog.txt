@@ -1,1 +1,1 @@
-- Bump max IDE version to 2026.2 (#40)
+- Release Ataman 2.1.2: fix fast leader sequences, function-key groups, mouse/keyboard navigation, Escape back, repeated group keys; support IDEA 2026.3
