@@ -81,7 +81,7 @@ repositories {
 }
 
 group = "io.github.mishkun"
-version = "1.5.3"
+version = "2.1.1"
 
 intellijPlatform {
     instrumentCode.set(false)
@@ -91,7 +91,7 @@ intellijPlatform {
         version = project.version.toString()
         ideaVersion {
             sinceBuild = "243"
-            untilBuild = "262.*"
+            untilBuild = "263.*"
         }
     }
     publishing {
@@ -117,7 +117,7 @@ intellijPlatform {
                 types.set(listOf(IntelliJPlatformType.IntellijIdea))
                 channels.set(listOf(ProductRelease.Channel.RELEASE))
                 sinceBuild = "243"
-                untilBuild = "262.*"
+                untilBuild = "263.*"
             }
         }
     }

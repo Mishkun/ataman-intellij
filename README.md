@@ -128,14 +128,13 @@ To run the build, unit tests, and binary compatibility checks:
 ```
 
 The supported range is declared by the two matching literal `sinceBuild = "243"`
-and `untilBuild = "261.*"` settings in `build.gradle.kts`: plugin metadata and the
-fallback verifier selector. This CI change does not include PR #40's range increase.
-Verification on a newer IDE is a forward check, not a declaration of support.
+and `untilBuild = "263.*"` settings in `build.gradle.kts`: plugin metadata and the
+fallback verifier selector. Ataman supports IntelliJ IDEA 2024.3 through 2026.3.
 
-`gradle.properties` configures the compilation platform. The verifier matrix is optional:
+`gradle.properties` configures the compilation platform and verifier matrix:
 
 - `platformVersion`: fixed IDEA version used to compile and run tests.
-- `pluginVerificationVersions`: optional comma-separated exact IDEA versions or build numbers checked by Plugin Verifier; not set by default.
+- `pluginVerificationVersions`: comma-separated exact IDEA versions or build numbers checked by Plugin Verifier; currently 2024.3 and 2026.3.
 
 When `pluginVerificationVersions` is present, only those exact IDEA targets are
 checked. Without it, CI checks IDEA 2024.3 plus the latest stable IDEA selected
@@ -145,7 +144,7 @@ automatically changes that latest target; there is no fixed default override.
 To check a specific IDEA build without changing these defaults:
 
 ```sh
-./gradlew verifyPlugin -PpluginVerificationVersions=2024.3,2026.1
+./gradlew verifyPlugin -PpluginVerificationVersions=2024.3,2026.3
 ```
 
 Plugin ZIPs are written to `build/distributions/`; compatibility reports are in
