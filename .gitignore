@@ -116,6 +116,9 @@ tags
 
 ### Gradle template
 .gradle
+/.kotlin/
+__pycache__/
+*.pyc
 /build/
 
 # Ignore Gradle GUI config
@@ -171,3 +174,14 @@ Temporary Items
 # Python helpers used by CI
 __pycache__/
 *.py[cod]
+
+# Claude Code
+.claude/
+
+# Auto-generated module files
+.idea/modules/
+.idea/*.iml
+*.iml
+
+# Scratchpad
+scratchpad.txt

@@ -28,3 +28,8 @@ sealed class LeaderBinding {
         val bindings: List<LeaderBinding>
     ) : LeaderBinding()
 }
+
+fun List<LeaderBinding>.toKeyStrokeMap(): Map<KeyStroke, LeaderBinding> = associateBy { it.key }
+
+fun List<LeaderBinding>.toCharMap(): Map<Char, LeaderBinding> =
+    filter { it.char.length == 1 }.associateBy { it.char[0] }
